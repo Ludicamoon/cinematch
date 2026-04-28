@@ -504,11 +504,73 @@
     /* ─── EMPTY / LOADING ─── */
     .empty-state {
       text-align: center;
-      padding: 100px 20px;
+      padding: 48px 20px 60px;
+      max-width: 1200px;
+      margin: 0 auto;
     }
-    .empty-state .big-icon { font-size: 72px; margin-bottom: 20px; }
-    .empty-state h2 { font-size: 26px; font-weight: 800; margin-bottom: 10px; }
-    .empty-state p { color: var(--text-muted); font-size: 15px; max-width: 400px; margin: 0 auto; }
+    .empty-state h2 { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+    .empty-state > p { color: var(--text-muted); font-size: 15px; margin: 0 auto 36px; }
+
+    .trending-section { text-align: left; margin-top: 4px; }
+    .trending-label {
+      font-size: 12px; font-weight: 700; color: var(--text-dim);
+      text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 14px;
+    }
+    .trending-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 12px;
+    }
+    .trending-item {
+      cursor: pointer; border-radius: 10px; overflow: hidden;
+      background: var(--surface); border: 1px solid var(--border);
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .trending-item:hover { transform: translateY(-3px); border-color: var(--accent); }
+    .trending-item img { width: 100%; aspect-ratio: 2/3; object-fit: cover; display: block; }
+    .trending-placeholder {
+      width: 100%; aspect-ratio: 2/3; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 32px; background: var(--surface-alt);
+    }
+    .trending-item-title {
+      padding: 7px 8px 2px; font-size: 11px; font-weight: 600; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .trending-item-year { padding: 0 8px 7px; font-size: 10px; color: var(--text-dim); }
+
+    .btn-actor {
+      background: none; border: none; padding: 0; margin: 0;
+      color: var(--text-muted); font-size: inherit; cursor: pointer;
+      text-decoration: underline dotted; text-underline-offset: 3px;
+      transition: color 0.15s;
+    }
+    .btn-actor:hover { color: var(--text); }
+
+    .btn-feedback.watchlisted {
+      background: rgba(251,191,36,0.12);
+      border-color: rgba(251,191,36,0.4);
+      color: #fbbf24;
+    }
+    .watchlist-badge {
+      font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 20px;
+      background: rgba(251,191,36,0.12); border: 1px solid rgba(251,191,36,0.35);
+      color: #fbbf24; cursor: pointer; white-space: nowrap;
+    }
+    #watchlistModal .detail-modal { max-width: 560px; padding: 28px; }
+    .wl-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .wl-item:last-child { border-bottom: none; }
+    .wl-poster {
+      width: 44px; height: 66px; object-fit: cover;
+      border-radius: 6px; flex-shrink: 0; background: var(--surface-alt);
+    }
+    .wl-info { flex: 1; min-width: 0; }
+    .wl-title { font-size: 14px; font-weight: 600; color: var(--text); }
+    .wl-year  { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+    .wl-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
     .loading-state {
       text-align: center;
@@ -962,6 +1024,30 @@
       padding-bottom: 6px;
     }
 
+    .trailer-thumb {
+      position: relative; cursor: pointer;
+      border-radius: 12px; overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    .trailer-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
+    .trailer-play {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.35); transition: background 0.15s;
+    }
+    .trailer-play:hover { background: rgba(0,0,0,0.55); }
+    .trailer-play-icon {
+      width: 60px; height: 60px; border-radius: 50%;
+      background: rgba(255,255,255,0.92);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; padding-left: 4px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .trailer-wrap iframe {
+      width: 100%; aspect-ratio: 16/9; border-radius: 12px;
+      border: none; display: block;
+    }
+
     .cast-chip {
       flex-shrink: 0;
       display: flex;
@@ -1132,6 +1218,7 @@
       </div>
       <button class="btn-icon" id="editKeyBtn" title="Cambiar API key">⚙️</button>
       <span id="traktBadge" class="trakt-badge hidden" title="Trakt activo">🟠 Trakt</span>
+      <button id="watchlistBtn" class="watchlist-badge hidden" onclick="openWatchlist()">📌 0</button>
     </div>
   </header>
 
@@ -1173,9 +1260,12 @@
   <!-- MAIN -->
   <main>
     <div id="emptyState" class="empty-state">
-      <div class="big-icon">🍿</div>
-      <h2>¿Qué película te ha gustado?</h2>
-      <p>Busca cualquier título y recibirás 20 recomendaciones personalizadas con todo el detalle</p>
+      <h2>🍿 ¿Qué película te ha gustado?</h2>
+      <p>Busca cualquier título y recibirás 20 recomendaciones personalizadas</p>
+      <div class="trending-section">
+        <div class="trending-label">📈 Tendencias esta semana</div>
+        <div id="trendingGrid" class="trending-grid"></div>
+      </div>
     </div>
 
     <div id="loadingState" class="loading-state hidden">
@@ -1189,6 +1279,15 @@
       No hay resultados con los filtros actuales.
     </div>
   </main>
+</div>
+
+<!-- ═══════════════════ WATCHLIST MODAL ═══════════════════ -->
+<div id="watchlistModal" class="overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="detail-modal">
+    <button class="modal-close" onclick="$('#watchlistModal').classList.add('hidden')">✕</button>
+    <h2 style="font-size:18px;font-weight:800;margin-bottom:20px">📌 Watchlist</h2>
+    <div id="watchlistContent"></div>
+  </div>
 </div>
 
 <!-- ═══════════════════ DETAIL MODAL ═══════════════════ -->
@@ -1275,6 +1374,7 @@ function setMode(mode) {
   $('#moviesGrid').classList.add('hidden');
   $('#emptyState').classList.remove('hidden');
   S.movies = []; S.base = null;
+  loadTrending();
 }
 
 /* ── Perfil de gustos global ── */
@@ -1355,6 +1455,62 @@ function discardMovie(movieId) {
   const fb = getFeedback(S.base.id);
   if (!fb.discard.includes(movieId)) fb.discard.push(movieId);
   saveFeedback(S.base.id, fb);
+  applyFilters();
+}
+
+/* ── Watchlist ── */
+function getWatchlist() {
+  return JSON.parse(localStorage.getItem('global_watchlist')||'[]');
+}
+function isInWatchlist(id) {
+  return getWatchlist().some(m => m.id === id);
+}
+function toggleWatchlist(movieId) {
+  const movie = S.movies.find(m => m.id === movieId);
+  if (!movie) return;
+  let wl = getWatchlist();
+  if (isInWatchlist(movieId)) {
+    wl = wl.filter(m => m.id !== movieId);
+    toast('Quitada de la watchlist');
+  } else {
+    wl.push({ id: movie.id, title: mTitle(movie), year: mYear(movie), poster_path: movie.poster_path });
+    toast('Añadida a la watchlist 📌');
+  }
+  localStorage.setItem('global_watchlist', JSON.stringify(wl));
+  updateWatchlistBadge();
+  applyFilters();
+}
+function updateWatchlistBadge() {
+  const count = getWatchlist().length;
+  const btn = $('#watchlistBtn');
+  if (!btn) return;
+  btn.textContent = `📌 ${count}`;
+  btn.classList.toggle('hidden', count === 0);
+}
+function openWatchlist() {
+  const wl = getWatchlist();
+  if (!wl.length) { toast('La watchlist está vacía'); return; }
+  $('#watchlistContent').innerHTML = wl.map(m => `
+    <div class="wl-item">
+      ${m.poster_path
+        ? `<img src="${IMG92}${m.poster_path}" class="wl-poster" alt="">`
+        : `<div class="wl-poster" style="display:flex;align-items:center;justify-content:center;font-size:22px">🎬</div>`}
+      <div class="wl-info">
+        <div class="wl-title">${esc(m.title)}</div>
+        <div class="wl-year">${m.year||''}</div>
+      </div>
+      <div class="wl-actions">
+        <button class="btn-details" onclick="$('#watchlistModal').classList.add('hidden');loadSimilar(${m.id})">Similares</button>
+        <button class="btn-feedback discard" onclick="removeFromWatchlist(${m.id})" title="Quitar">✕</button>
+      </div>
+    </div>`).join('');
+  $('#watchlistModal').classList.remove('hidden');
+}
+function removeFromWatchlist(id) {
+  let wl = getWatchlist().filter(m => m.id !== id);
+  localStorage.setItem('global_watchlist', JSON.stringify(wl));
+  updateWatchlistBadge();
+  openWatchlist();
   applyFilters();
 }
 
@@ -1445,6 +1601,8 @@ function showApp() {
   $('#app').classList.remove('hidden');
   $('#apiKeyModal').classList.add('hidden');
   $('#traktBadge').classList.toggle('hidden', !S.traktKey);
+  updateWatchlistBadge();
+  loadTrending();
 }
 
 /* ══════════════════════════════════════════════════
@@ -1769,6 +1927,68 @@ async function loadSimilar(movieId) {
   }
 }
 
+async function loadTrending() {
+  try {
+    const data = await tmdb(`/trending/${mType()}/week`, { page: 1 });
+    const items = (data.results||[]).slice(0, 12);
+    const grid = $('#trendingGrid');
+    if (!grid) return;
+    grid.innerHTML = items.map(m => `
+      <div class="trending-item" onclick="loadSimilar(${m.id})">
+        ${m.poster_path
+          ? `<img src="${IMG342}${m.poster_path}" alt="${esc(mTitle(m))}" loading="lazy">`
+          : `<div class="trending-placeholder">${S.mode==='tv'?'📺':'🎬'}</div>`}
+        <div class="trending-item-title">${esc(mTitle(m))}</div>
+        <div class="trending-item-year">${mYear(m)||''}${m.vote_average?` · ⭐${m.vote_average.toFixed(1)}`:''}</div>
+      </div>`).join('');
+  } catch(e) { console.warn('Trending falló:', e.message); }
+}
+
+async function searchByActor(personId, name) {
+  showLoading();
+  setLabel(`Cargando filmografía de ${name}…`);
+  try {
+    const type = mType();
+    const data = await tmdb(type === 'tv'
+      ? `/person/${personId}/tv_credits`
+      : `/person/${personId}/movie_credits`
+    );
+    const credits = (data.cast||[]);
+    const uniqueIds = [...new Set(credits.map(m => m.id))];
+    if (!uniqueIds.length) {
+      hideLoading();
+      toast(`No se encontraron títulos con ${name}`, 'error');
+      return;
+    }
+    const sorted = uniqueIds
+      .map(id => credits.find(m => m.id === id))
+      .filter(Boolean)
+      .sort((a,b) => (b.vote_count||0) - (a.vote_count||0));
+    const ids = sorted.slice(0, 24).map(m => m.id);
+    const details = await fetchBatch(ids, type);
+    S.movies = details.filter(Boolean)
+      .filter(m => (m.vote_count||0) > 20)
+      .sort((a,b) => (b.vote_count||0) - (a.vote_count||0));
+    S.genres = new Set(); S.minYear = null; S.minScore = 0;
+    $('#baseBanner').innerHTML = `
+      <div class="banner-wrap">
+        <div class="banner-content" style="padding:20px 24px">
+          <div class="banner-info">
+            <div class="banner-eyebrow">🎭 Filmografía como actor</div>
+            <div class="banner-title">${esc(name)}</div>
+            <div class="banner-meta">${S.movies.length} ${type==='tv'?'series':'películas'}</div>
+          </div>
+        </div>
+      </div>`;
+    $('#baseBanner').classList.remove('hidden');
+    resetFilterUI(); buildGenrePills();
+    $('#filtersBar').classList.remove('hidden');
+    applyFilters(); hideLoading();
+  } catch(err) {
+    hideLoading(); toast(`Error: ${err.message}`, 'error'); console.error(err);
+  }
+}
+
 async function searchByDirector(personId, name) {
   showLoading();
   setLabel(`Cargando filmografía de ${name}…`);
@@ -1973,6 +2193,12 @@ function renderCards(list) {
   grid.querySelectorAll('.btn-director').forEach(btn =>
     btn.addEventListener('click', () => searchByDirector(+btn.dataset.did, btn.dataset.dname))
   );
+  grid.querySelectorAll('.btn-actor').forEach(btn =>
+    btn.addEventListener('click', () => searchByActor(+btn.dataset.aid, btn.dataset.aname))
+  );
+  grid.querySelectorAll('.btn-wl').forEach(btn =>
+    btn.addEventListener('click', () => toggleWatchlist(+btn.dataset.wid))
+  );
 }
 
 function cardHTML(m, rank) {
@@ -2017,7 +2243,7 @@ function cardHTML(m, rank) {
       </div>
 
       ${dir ? `<div class="card-crew">🎬 <button class="btn-director" data-did="${dir.id}" data-dname="${esc(dir.name)}">${esc(dir.name)}</button></div>` : ''}
-      ${cast.length ? `<div class="card-crew">👥 ${cast.map(a=>esc(a.name)).join(', ')}</div>` : ''}
+      ${cast.length ? `<div class="card-crew">👥 ${cast.map(a=>`<button class="btn-actor" data-aid="${a.id}" data-aname="${esc(a.name)}">${esc(a.name)}</button>`).join(', ')}</div>` : ''}
 
       ${m.overview ? `<div class="card-overview">${esc(m.overview)}</div>` : ''}
 
@@ -2041,6 +2267,10 @@ function cardHTML(m, rank) {
         <button class="btn-feedback${m._seen?' seen':''}" onclick="toggleSeen(${m.id})"
           title="${m._seen?'Quitar de vistas':'Marcar como vista'}">
           ${m._seen?'✓ Vista':'👁 Ya la vi'}
+        </button>
+        <button class="btn-feedback${isInWatchlist(m.id)?' watchlisted':''} btn-wl" data-wid="${m.id}"
+          title="${isInWatchlist(m.id)?'Quitar de watchlist':'Ver después'}">
+          ${isInWatchlist(m.id)?'📌 Guardada':'📌 Ver después'}
         </button>
         <button class="btn-feedback discard" onclick="discardMovie(${m.id})" title="Ocultar — no me parece similar">✕</button>
       </div>
@@ -2229,6 +2459,8 @@ function openDetail(m) {
         <p style="color:var(--text-muted);line-height:1.75;font-size:14px">${esc(m.overview)||'Sin sinopsis disponible.'}</p>
       </div>
 
+      <div id="trailerZone" class="m-section"></div>
+
       <div class="m-section">
         <div class="m-section-title">Ficha técnica</div>
         <div class="stats-grid">
@@ -2251,7 +2483,7 @@ function openDetail(m) {
         <div class="m-section-title">Reparto principal</div>
         <div class="cast-scroll">
           ${cast.map(a=>`
-          <div class="cast-chip">
+          <div class="cast-chip" data-aid="${a.id}" data-aname="${esc(a.name)}">
             <img src="${a.profile_path?IMG92+a.profile_path:''}" class="cast-avatar" alt=""
                  onerror="this.style.background='var(--card-hover)';this.removeAttribute('src')">
             <div>
@@ -2293,6 +2525,41 @@ function openDetail(m) {
 
   $('#detailModal').classList.remove('hidden');
   $('.detail-modal').scrollTop = 0;
+
+  // Cargar tráiler de YouTube en segundo plano
+  tmdb(`/${mType()}/${m.id}/videos`).then(data => {
+    const trailer = (data.results||[]).find(v => v.type==='Trailer' && v.site==='YouTube')
+      || (data.results||[]).find(v => v.site==='YouTube');
+    const zone = $('#trailerZone');
+    if (!zone) return;
+    if (trailer) {
+      zone.innerHTML = `
+        <div class="m-section-title">Tráiler</div>
+        <div class="trailer-thumb" onclick="playTrailer('${trailer.key}',this)">
+          <img src="https://img.youtube.com/vi/${trailer.key}/hqdefault.jpg" class="trailer-img" alt="Tráiler"
+               onerror="this.closest('.trailer-thumb').style.display='none'">
+          <div class="trailer-play"><div class="trailer-play-icon">▶</div></div>
+        </div>`;
+    } else {
+      zone.remove();
+    }
+  }).catch(() => { const z=$('#trailerZone'); if(z) z.remove(); });
+
+  $('#detailContent').querySelectorAll('.cast-chip[data-aid]').forEach(chip => {
+    chip.style.cursor = 'pointer';
+    chip.title = `Ver filmografía de ${chip.dataset.aname}`;
+    chip.addEventListener('click', () => {
+      $('#detailModal').classList.add('hidden');
+      searchByActor(+chip.dataset.aid, chip.dataset.aname);
+    });
+  });
+}
+
+function playTrailer(key, el) {
+  el.outerHTML = `<div class="trailer-wrap">
+    <iframe src="https://www.youtube.com/embed/${key}?autoplay=1"
+      allow="autoplay; fullscreen" allowfullscreen></iframe>
+  </div>`;
 }
 
 /* ══════════════════════════════════════════════════
