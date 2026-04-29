@@ -43,6 +43,35 @@
     /* ─── UTILS ─── */
     .hidden { display: none !important; }
 
+    /* ─── TOOLTIP ─── */
+    .tt { position: relative; }
+    .tt::after {
+      content: attr(data-tt);
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%; transform: translateX(-50%);
+      background: #1e1e2e;
+      border: 1px solid var(--border-hover);
+      color: var(--text);
+      font-size: 12px; font-weight: 500; line-height: 1.4;
+      white-space: nowrap;
+      padding: 7px 12px;
+      border-radius: 9px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.18s, transform 0.18s;
+      transform: translateX(-50%) translateY(4px);
+      z-index: 500;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+    }
+    .tt:hover::after {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    /* Los del extremo derecho se anclan a la derecha para no salirse */
+    .tt-left::after { left: auto; right: 0; transform: translateY(4px); }
+    .tt-left:hover::after { transform: translateY(0); }
+
     /* ─── API KEY MODAL ─── */
     .overlay {
       position: fixed; inset: 0;
@@ -808,6 +837,68 @@
     .sim-pill.score     { background: rgba(167,139,250,0.15);color: #c4b5fd; border: 1px solid rgba(167,139,250,0.3); }
     .sim-pill.consensus { background: rgba(251,191,36,0.15); color: #fde68a; border: 1px solid rgba(251,191,36,0.35); font-weight:700; }
     .sim-pill.trakt     { background: rgba(237,95,0,0.12);   color: #fb923c; border: 1px solid rgba(237,95,0,0.3); }
+    .sim-pill-link      { cursor: pointer; transition: opacity 0.15s; }
+    .sim-pill-link:hover { opacity: 0.72; }
+
+    .critic-scores { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
+    .critic-badge {
+      display:inline-flex; align-items:center; gap:4px;
+      padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 700;
+      border: 1px solid transparent;
+    }
+    .critic-badge.rt-fresh  { background:rgba(40,167,69,0.15); color:#4ade80; border-color:rgba(40,167,69,0.3); }
+    .critic-badge.rt-rotten { background:rgba(220,53,69,0.12); color:#f87171; border-color:rgba(220,53,69,0.3); }
+    .critic-badge.mc-good   { background:rgba(0,128,0,0.15);   color:#4ade80; border-color:rgba(0,128,0,0.3); }
+    .critic-badge.mc-mixed  { background:rgba(245,158,11,0.15); color:#fbbf24; border-color:rgba(245,158,11,0.3); }
+    .critic-badge.mc-bad    { background:rgba(220,53,69,0.12);  color:#f87171; border-color:rgba(220,53,69,0.3); }
+
+    /* Platform filter */
+    .platform-pill {
+      display:inline-flex; align-items:center; gap:5px;
+      padding: 4px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+    }
+    .platform-pill img { width:16px; height:16px; border-radius:3px; object-fit:cover; }
+    .platform-pill:hover { border-color: var(--border-hover); color: var(--text); }
+    .platform-pill.active { background: rgba(16,185,129,0.15); border-color: rgba(16,185,129,0.4); color: #34d399; }
+
+    /* Sort select */
+    .sort-select {
+      padding: 5px 10px; border-radius: 8px; font-size: 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text-muted); cursor: pointer;
+    }
+    .sort-select:focus { outline: none; border-color: var(--accent); }
+
+    .decade-pills { display:flex; gap:4px; flex-wrap:wrap; }
+    .decade-pill {
+      padding: 4px 9px; border-radius: 20px; font-size: 11px; font-weight: 700;
+      border: 1px solid var(--border); background: var(--surface-alt);
+      color: var(--text-dim); cursor: pointer; transition: all 0.15s;
+    }
+    .decade-pill:hover { border-color: var(--border-hover); color: var(--text); }
+    .decade-pill.active { background: rgba(124,58,237,0.15); border-color: rgba(124,58,237,0.4); color: var(--accent-light); }
+
+    .history-wrap { position: relative; }
+    .history-panel {
+      position: absolute; top: calc(100% + 8px); right: 0;
+      background: var(--surface); border: 1px solid var(--border-hover);
+      border-radius: 14px; min-width: 230px; max-height: 380px;
+      overflow-y: auto; z-index: 200; box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+      padding: 8px;
+    }
+    .hist-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px; border-radius: 8px; cursor: pointer; transition: background 0.12s;
+    }
+    .hist-item:hover { background: var(--card-hover); }
+    .hist-poster {
+      width: 32px; height: 48px; object-fit: cover;
+      border-radius: 4px; background: var(--surface-alt); flex-shrink: 0;
+    }
+    .hist-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .hist-year  { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
 
     /* Streaming */
     .streaming-row {
@@ -1194,6 +1285,30 @@
       </a>
       — amplía el pool de candidatos con listas de fans
     </p>
+    <label class="form-label" for="omdbKeyInput" style="margin-top:18px">
+      API key de OMDB <span style="color:var(--text-dim);font-weight:400">(opcional — añade Rotten Tomatoes y Metacritic)</span>
+    </label>
+    <input type="text" id="omdbKeyInput" class="form-input"
+           placeholder="Pega aquí tu API key de OMDB…" autocomplete="off" spellcheck="false">
+    <p class="help-text">
+      Gratis en
+      <a href="https://www.omdbapi.com/apikey.aspx" target="_blank" rel="noopener">
+        omdbapi.com → FREE
+      </a>
+      — 1 000 consultas/día, activa el link que te mandan por email
+    </p>
+    <label class="form-label" for="mdbKeyInput" style="margin-top:18px">
+      API key de MDBList <span style="color:var(--text-dim);font-weight:400">(opcional — añade Letterboxd, RT Audience y más)</span>
+    </label>
+    <input type="text" id="mdbKeyInput" class="form-input"
+           placeholder="Pega aquí tu API key de MDBList…" autocomplete="off" spellcheck="false">
+    <p class="help-text">
+      Gratis en
+      <a href="https://mdblist.com" target="_blank" rel="noopener">
+        mdblist.com → perfil → API
+      </a>
+      — agrega Letterboxd, RT Audience, Trakt y 8 fuentes más en una llamada
+    </p>
     <button class="btn-primary" id="saveKeyBtn">Empezar →</button>
   </div>
 </div>
@@ -1218,9 +1333,16 @@
         </div>
         <div id="autocomplete" class="autocomplete hidden"></div>
       </div>
-      <button class="btn-icon" id="editKeyBtn" title="Cambiar API key">⚙️</button>
-      <span id="traktBadge" class="trakt-badge hidden" title="Trakt activo">🟠 Trakt</span>
-      <button id="watchlistBtn" class="watchlist-badge hidden" onclick="openWatchlist()">📌 0</button>
+      <button class="btn-icon tt" id="editKeyBtn" data-tt="Cambiar claves API">⚙️</button>
+      <span id="traktBadge" class="trakt-badge hidden tt" data-tt="Trakt activo — amplía candidatos con listas de fans">🟠 Trakt</span>
+      <span id="omdbBadge" class="trakt-badge hidden tt" data-tt="OMDB activo — Rotten Tomatoes % y Metacritic" style="background:rgba(188,40,40,0.15);color:#f87171;border-color:rgba(188,40,40,0.3)">🍅 OMDB</span>
+      <span id="mdbBadge" class="trakt-badge hidden tt" data-tt="MDBList activo — Letterboxd, RT Audience y 8 fuentes más" style="background:rgba(99,102,241,0.15);color:#a5b4fc;border-color:rgba(99,102,241,0.3)">🎞 MDB</span>
+      <button id="watchlistBtn" class="watchlist-badge hidden tt" data-tt="Ver después — tu watchlist" onclick="openWatchlist()">📌 0</button>
+      <button id="tastesBtn" class="btn-icon hidden tt" data-tt="Tu perfil de gustos" onclick="openTastes()">📊</button>
+      <div class="history-wrap">
+        <button id="historyBtn" class="btn-icon hidden tt tt-left" data-tt="Historial de búsquedas" onclick="openHistory()">🕐</button>
+        <div id="historyPanel" class="history-panel hidden"></div>
+      </div>
     </div>
   </header>
 
@@ -1248,8 +1370,34 @@
         <select id="countrySelect" class="filter-select"></select>
       </div>
       <div class="filter-group">
+        <span class="filter-label">Década</span>
+        <div class="decade-pills" id="decadePills">
+          <button class="decade-pill" data-decade="1970">70s</button>
+          <button class="decade-pill" data-decade="1980">80s</button>
+          <button class="decade-pill" data-decade="1990">90s</button>
+          <button class="decade-pill" data-decade="2000">00s</button>
+          <button class="decade-pill" data-decade="2010">10s</button>
+          <button class="decade-pill" data-decade="2020">20s</button>
+        </div>
+      </div>
+      <div class="filter-group">
         <span class="filter-label">Vistas</span>
         <button class="btn-feedback" id="toggleSeenFilterBtn" onclick="toggleSeenFilter()" title="Ocultar películas ya vistas">👁 Ocultar vistas</button>
+      </div>
+      <div class="filter-group" id="platformGroup" style="display:none">
+        <span class="filter-label">Plataforma</span>
+        <div id="platformPills" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label">Ordenar</span>
+        <select id="sortSelect" class="sort-select">
+          <option value="score">Por similitud</option>
+          <option value="tmdb">Nota TMDB</option>
+          <option value="letterboxd">Letterboxd</option>
+          <option value="rt">Rotten Tomatoes</option>
+          <option value="year_desc">Más recientes</option>
+          <option value="year_asc">Más antiguas</option>
+        </select>
       </div>
       <button class="btn-clear" id="clearFiltersBtn">✕ Limpiar</button>
       <span class="results-count-badge" id="resultsCount"></span>
@@ -1289,6 +1437,15 @@
     <button class="modal-close" onclick="$('#watchlistModal').classList.add('hidden')">✕</button>
     <h2 style="font-size:18px;font-weight:800;margin-bottom:20px">📌 Watchlist</h2>
     <div id="watchlistContent"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ TASTES MODAL ═══════════════════ -->
+<div id="tastesModal" class="overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="detail-modal" style="max-width:520px;padding:32px">
+    <button class="modal-close" onclick="$('#tastesModal').classList.add('hidden')">✕</button>
+    <h2 style="font-size:18px;font-weight:800;margin-bottom:20px">📊 Tu perfil de gustos</h2>
+    <div id="tastesContent"></div>
   </div>
 </div>
 
@@ -1335,6 +1492,8 @@ const LANGS = {
 const S = {
   apiKey:    localStorage.getItem('tmdb_key')   || '',
   traktKey:  localStorage.getItem('trakt_key')  || '',
+  omdbKey:   localStorage.getItem('omdb_key')   || '',
+  mdbKey:    localStorage.getItem('mdb_key')    || '',
   country:   localStorage.getItem('tmdb_country') || 'ES',
   base:      null,
   baseCred:  null,
@@ -1350,6 +1509,9 @@ const S = {
   acIdx:     -1,
   hideSeen:   false,
   sourceSets: null,
+  decade:     null,
+  platformIds: new Set(),
+  sort:        'score',
   mode:      'movie',   // 'movie' | 'tv'
 };
 
@@ -1395,6 +1557,197 @@ function recordSearch(movie) {
   const dir = (movie.credits?.crew||[]).find(c=>c.job==='Director');
   if (dir) t.directors[dir.id] = (t.directors[dir.id]||0) + 3;
   saveTastes(t);
+
+  // Save to search history
+  const hist = getHistory();
+  const entry = {
+    id: movie.id,
+    title: mTitle(movie),
+    year: mYear(movie),
+    poster: movie.poster_path ? `${IMG92}${movie.poster_path}` : null,
+    type: S.mode
+  };
+  saveHistory([entry, ...hist.filter(h => h.id !== movie.id)]);
+  updateHistoryBadge();
+  $('#tastesBtn')?.classList.remove('hidden');
+}
+
+function getHistory() {
+  return JSON.parse(localStorage.getItem('search_history')||'[]');
+}
+function saveHistory(arr) {
+  localStorage.setItem('search_history', JSON.stringify(arr.slice(0,10)));
+}
+function updateHistoryBadge() {
+  const hist = getHistory();
+  $('#historyBtn').classList.toggle('hidden', hist.length === 0);
+}
+function openHistory() {
+  const panel = $('#historyPanel');
+  if (!panel.classList.contains('hidden')) { panel.classList.add('hidden'); return; }
+  const hist = getHistory();
+  if (!hist.length) return;
+  panel.innerHTML = hist.map(h => `
+    <div class="hist-item" data-hid="${h.id}" data-htype="${h.type||'movie'}">
+      ${h.poster ? `<img src="${h.poster}" class="hist-poster" alt="">` : '<div class="hist-poster"></div>'}
+      <div>
+        <div class="hist-title">${esc(h.title)}</div>
+        <div class="hist-year">${h.year||''}</div>
+      </div>
+    </div>`).join('');
+  panel.classList.remove('hidden');
+  panel.querySelectorAll('.hist-item').forEach(item => {
+    item.addEventListener('click', () => {
+      panel.classList.add('hidden');
+      const type = item.dataset.htype;
+      if (type !== S.mode) setMode(type);
+      loadSimilar(+item.dataset.hid);
+    });
+  });
+  setTimeout(() => {
+    document.addEventListener('click', function closePanel(e) {
+      if (!$('.history-wrap').contains(e.target)) {
+        panel.classList.add('hidden');
+        document.removeEventListener('click', closePanel);
+      }
+    });
+  }, 0);
+}
+
+/* ── Compartir búsqueda ── */
+function shareSearch() {
+  if (!S.base) return;
+  // Base URL: GitHub Pages cuando estamos en file://, URL actual si ya estamos en HTTPS
+  const base = location.protocol === 'https:'
+    ? location.href.split('?')[0]
+    : 'https://ludicamoon.github.io/cinematch/';
+  const url = `${base}?id=${S.base.id}&type=${S.mode}`;
+
+  if (navigator.clipboard && location.protocol === 'https:') {
+    navigator.clipboard.writeText(url)
+      .then(() => toast('🔗 Enlace copiado al portapapeles', 'success'))
+      .catch(() => showShareModal(url));
+  } else {
+    showShareModal(url);
+  }
+}
+
+function showShareModal(url) {
+  // Mini modal con el enlace seleccionable
+  const existing = $('#shareModal');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'shareModal';
+  div.style.cssText = `
+    position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;
+    align-items:center;justify-content:center;z-index:9999;padding:16px
+  `;
+  div.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border-hover);border-radius:18px;
+                padding:28px;max-width:480px;width:100%">
+      <div style="font-size:16px;font-weight:800;margin-bottom:6px">📤 Compartir búsqueda</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px">
+        Copia este enlace — quien lo abra verá los mismos similares:
+      </div>
+      <div style="display:flex;gap:8px">
+        <input id="shareUrlInput" value="${url}" readonly
+          style="flex:1;padding:10px 12px;border-radius:9px;border:1px solid var(--border-hover);
+                 background:var(--card);color:var(--text);font-size:13px;outline:none">
+        <button onclick="
+          document.getElementById('shareUrlInput').select();
+          document.execCommand('copy');
+          this.textContent='✓ Copiado';
+          setTimeout(()=>document.getElementById('shareModal').remove(),1200)
+        " style="padding:10px 16px;border-radius:9px;background:var(--accent);color:white;
+                 font-weight:700;font-size:13px;border:none;cursor:pointer;white-space:nowrap">
+          Copiar
+        </button>
+      </div>
+      <button onclick="document.getElementById('shareModal').remove()"
+        style="margin-top:14px;background:none;border:none;color:var(--text-muted);
+               font-size:13px;cursor:pointer;width:100%;text-align:center">
+        Cerrar
+      </button>
+    </div>`;
+  div.addEventListener('click', e => { if (e.target === div) div.remove(); });
+  document.body.appendChild(div);
+  setTimeout(() => document.getElementById('shareUrlInput')?.select(), 50);
+}
+
+/* ── Perfil de gustos ── */
+const GENRE_LABELS = {
+  28:'Acción',12:'Aventura',16:'Animación',35:'Comedia',80:'Crimen',
+  99:'Documental',18:'Drama',10751:'Familia',14:'Fantasía',36:'Historia',
+  27:'Terror',10402:'Música',9648:'Misterio',10749:'Romance',878:'Sci-Fi',
+  53:'Thriller',10752:'Bélica',37:'Western',10770:'TV Movie'
+};
+
+function openTastes() {
+  const t = getTastes();
+  const hist = getHistory();
+  if (!t.searches) {
+    toast('Aún no hay suficiente historial. Busca algunas películas primero.', 'error');
+    return;
+  }
+
+  // Top géneros
+  const topGenres = Object.entries(t.genres||{})
+    .sort((a,b) => b[1]-a[1]).slice(0,8)
+    .map(([id,n]) => ({ name: GENRE_LABELS[id] || S.genreMap[id] || `#${id}`, count: n }))
+    .filter(g => g.name);
+
+  // Décadas favoritas del historial
+  const decades = {};
+  hist.forEach(h => {
+    if (!h.year) return;
+    const d = Math.floor(+h.year / 10) * 10;
+    decades[d] = (decades[d]||0) + 1;
+  });
+  const topDecades = Object.entries(decades).sort((a,b)=>b[1]-a[1]).slice(0,3)
+    .map(([d]) => `${d}s`);
+
+  // Max bar width
+  const maxG = topGenres[0]?.count || 1;
+
+  $('#tastesContent').innerHTML = `
+    <div style="display:grid;gap:20px">
+      <div style="display:flex;gap:24px;flex-wrap:wrap">
+        <div style="text-align:center">
+          <div style="font-size:28px;font-weight:900;color:var(--accent-light)">${t.searches}</div>
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em">Búsquedas</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:28px;font-weight:900;color:var(--accent-light)">${hist.length}</div>
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em">En historial</div>
+        </div>
+        ${topDecades.length ? `<div style="text-align:center">
+          <div style="font-size:22px;font-weight:900;color:var(--accent-light)">${topDecades.join(' · ')}</div>
+          <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em">Décadas favoritas</div>
+        </div>` : ''}
+      </div>
+
+      ${topGenres.length ? `
+      <div>
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:12px">Géneros más buscados</div>
+        <div style="display:grid;gap:8px">
+          ${topGenres.map(g => `
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:110px;font-size:13px;color:var(--text)">${esc(g.name)}</div>
+              <div style="flex:1;background:var(--card);border-radius:4px;height:8px;overflow:hidden">
+                <div style="height:100%;background:var(--accent);border-radius:4px;width:${Math.round(g.count/maxG*100)}%"></div>
+              </div>
+              <div style="font-size:11px;color:var(--text-muted);width:24px;text-align:right">${g.count}</div>
+            </div>`).join('')}
+        </div>
+      </div>` : ''}
+
+      <button class="btn-feedback" style="align-self:start;color:var(--red)"
+        onclick="if(confirm('¿Borrar todo el historial de gustos?')){localStorage.removeItem('user_tastes');localStorage.removeItem('search_history');$('#tastesModal').classList.add('hidden');toast('Perfil borrado','success')}">
+        🗑 Borrar perfil
+      </button>
+    </div>`;
+
+  $('#tastesModal').classList.remove('hidden');
 }
 
 function recordSeen(movie) {
@@ -1534,8 +1887,10 @@ function boot() {
   $('#saveKeyBtn').addEventListener('click', saveKey);
   $('#apiKeyInput').addEventListener('keydown', e => { if(e.key==='Enter') saveKey(); });
   $('#editKeyBtn').addEventListener('click', () => {
-    $('#apiKeyInput').value = S.apiKey;
+    $('#apiKeyInput').value   = S.apiKey;
     $('#traktKeyInput').value = S.traktKey;
+    $('#omdbKeyInput').value  = S.omdbKey;
+    $('#mdbKeyInput').value   = S.mdbKey;
     $('#apiKeyModal').classList.remove('hidden');
   });
 
@@ -1559,6 +1914,21 @@ function boot() {
     if (S.filtered.length) renderCards(S.filtered);
   });
   $('#clearFiltersBtn').addEventListener('click', clearFilters);
+  $('#sortSelect').addEventListener('change', e => { S.sort = e.target.value; applyFilters(); });
+  $$('.decade-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const d = +btn.dataset.decade;
+      if (S.decade === d) {
+        S.decade = null;
+        btn.classList.remove('active');
+      } else {
+        S.decade = d;
+        $$('.decade-pill').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      applyFilters();
+    });
+  });
   $('#closeDetailBtn').addEventListener('click', () => $('#detailModal').classList.add('hidden'));
   $('#detailModal').addEventListener('click', e => {
     if (e.target === $('#detailModal')) $('#detailModal').classList.add('hidden');
@@ -1594,18 +1964,43 @@ function saveKey() {
   S.traktKey = tk;
   if (tk) localStorage.setItem('trakt_key', tk);
   else localStorage.removeItem('trakt_key');
+  const ok = $('#omdbKeyInput').value.trim();
+  S.omdbKey = ok;
+  if (ok) localStorage.setItem('omdb_key', ok);
+  else localStorage.removeItem('omdb_key');
+  const mk = $('#mdbKeyInput').value.trim();
+  S.mdbKey = mk;
+  if (mk) localStorage.setItem('mdb_key', mk);
+  else localStorage.removeItem('mdb_key');
   $('#traktBadge').classList.toggle('hidden', !tk);
+  $('#omdbBadge').classList.toggle('hidden', !ok);
+  $('#mdbBadge').classList.toggle('hidden', !mk);
   $('#apiKeyModal').classList.add('hidden');
   showApp();
-  toast(`Guardado ✓${tk ? ' · Trakt activo 🟠' : ''}`, 'success');
+  const parts = ['Guardado ✓', tk ? 'Trakt 🟠' : '', ok ? 'OMDB 🍅' : '', mk ? 'MDBList 🎞' : ''].filter(Boolean);
+  toast(parts.join(' · '), 'success');
 }
 
 function showApp() {
   $('#app').classList.remove('hidden');
   $('#apiKeyModal').classList.add('hidden');
   $('#traktBadge').classList.toggle('hidden', !S.traktKey);
+  $('#omdbBadge').classList.toggle('hidden', !S.omdbKey);
+  $('#mdbBadge').classList.toggle('hidden', !S.mdbKey);
   updateWatchlistBadge();
+  updateHistoryBadge();
+  // Botón de perfil visible si hay al menos 1 búsqueda
+  const t = getTastes();
+  $('#tastesBtn').classList.toggle('hidden', !t.searches);
   loadTrending();
+  // Cargar búsqueda compartida desde URL (?id=X&type=Y)
+  const params = new URLSearchParams(location.search);
+  const sharedId = params.get('id');
+  const sharedType = params.get('type');
+  if (sharedId) {
+    if (sharedType && sharedType !== S.mode) setMode(sharedType);
+    loadSimilar(+sharedId);
+  }
 }
 
 /* ══════════════════════════════════════════════════
@@ -1634,6 +2029,135 @@ async function tmdb(path, params={}) {
 ══════════════════════════════════════════════════ */
 const TRAKT_API = 'https://api.trakt.tv';
 
+/* ══════════════════════════════════════════════════
+   CACHÉ DE BÚSQUEDAS (6 horas, max 600 KB por entrada)
+══════════════════════════════════════════════════ */
+const SEARCH_CACHE_TTL = 6 * 3600 * 1000;
+
+function searchCacheKey(id, type) { return `sc_${type}_${id}`; }
+
+function saveSearchCache(movieId, type) {
+  try {
+    const payload = {
+      movies:     S.movies,
+      base:       S.base,
+      baseCred:   S.baseCred,
+      baseKws:    [...S.baseKws],
+      genreMap:   S.genreMap,
+      sourceSets: S.sourceSets ? {
+        rec:   [...S.sourceSets.rec],
+        sim:   [...S.sourceSets.sim],
+        trakt: [...S.sourceSets.trakt.entries()],
+      } : null,
+      ts: Date.now(),
+    };
+    const str = JSON.stringify(payload);
+    if (str.length > 600_000) return; // no guardar si es demasiado grande
+    localStorage.setItem(searchCacheKey(movieId, type), str);
+  } catch {}
+}
+
+function loadSearchCache(movieId, type) {
+  try {
+    const raw = localStorage.getItem(searchCacheKey(movieId, type));
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (Date.now() - data.ts > SEARCH_CACHE_TTL) {
+      localStorage.removeItem(searchCacheKey(movieId, type));
+      return null;
+    }
+    return data;
+  } catch { return null; }
+}
+
+function restoreFromCache(data) {
+  S.movies   = data.movies;
+  S.base     = data.base;
+  S.baseCred = data.baseCred;
+  S.baseKws  = new Set(data.baseKws);
+  S.genreMap = data.genreMap;
+  S.sourceSets = data.sourceSets ? {
+    rec:   new Set(data.sourceSets.rec),
+    sim:   new Set(data.sourceSets.sim),
+    trakt: new Map(data.sourceSets.trakt),
+  } : null;
+}
+
+/* ══════════════════════════════════════════════════
+   OMDB — Rotten Tomatoes + Metacritic
+══════════════════════════════════════════════════ */
+const OMDB_API = 'https://www.omdbapi.com/';
+const OMDB_TTL = 7 * 24 * 3600 * 1000; // 7 días
+
+function omdbCacheGet(imdbId) {
+  try {
+    const raw = localStorage.getItem(`omdb_${imdbId}`);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    return Date.now() - ts < OMDB_TTL ? data : null;
+  } catch { return null; }
+}
+function omdbCacheSet(imdbId, data) {
+  try { localStorage.setItem(`omdb_${imdbId}`, JSON.stringify({ data, ts: Date.now() })); } catch {}
+}
+
+async function omdbFetch(imdbId) {
+  if (!S.omdbKey || !imdbId) return null;
+  const cached = omdbCacheGet(imdbId);
+  if (cached) return cached;
+  try {
+    const r = await fetch(`${OMDB_API}?i=${encodeURIComponent(imdbId)}&apikey=${encodeURIComponent(S.omdbKey)}`);
+    if (!r.ok) return null;
+    const d = await r.json();
+    if (d.Response === 'False') return null;
+    const rt  = parseInt((d.Ratings||[]).find(x=>x.Source==='Rotten Tomatoes')?.Value) || null;
+    const mc  = parseInt(d.Metascore) || null;
+    const imdb= parseFloat(d.imdbRating) || null;
+    const result = { rt, metacritic: mc, imdbRating: imdb, awards: d.Awards||'' };
+    omdbCacheSet(imdbId, result);
+    return result;
+  } catch { return null; }
+}
+
+/* ══════════════════════════════════════════════════
+   MDBList — Letterboxd + RT Audience + agregado
+══════════════════════════════════════════════════ */
+const MDB_TTL = 7 * 24 * 3600 * 1000;
+
+function mdbCacheGet(imdbId) {
+  try {
+    const raw = localStorage.getItem(`mdb_${imdbId}`);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    return Date.now() - ts < MDB_TTL ? data : null;
+  } catch { return null; }
+}
+function mdbCacheSet(imdbId, data) {
+  try { localStorage.setItem(`mdb_${imdbId}`, JSON.stringify({ data, ts: Date.now() })); } catch {}
+}
+
+async function mdblistFetch(imdbId) {
+  if (!S.mdbKey || !imdbId) return null;
+  const cached = mdbCacheGet(imdbId);
+  if (cached) return cached;
+  try {
+    const r = await fetch(`https://mdblist.com/api/?i=${encodeURIComponent(imdbId)}&apikey=${encodeURIComponent(S.mdbKey)}`);
+    if (!r.ok) return null;
+    const d = await r.json();
+    if (!d || d.error || !d.ratings) return null;
+    const get = src => (d.ratings).find(x => x.source === src);
+    const lb  = get('letterboxd');
+    const rta = get('tomatoesaudience');
+    const result = {
+      mdbScore:   typeof d.score_average === 'number' ? d.score_average : null,
+      letterboxd: lb  ? (lb.score  ?? null) : null,
+      rtAudience: rta ? (rta.score ?? null) : null,
+    };
+    mdbCacheSet(imdbId, result);
+    return result;
+  } catch { return null; }
+}
+
 async function traktFetch(path) {
   const r = await fetch(`${TRAKT_API}${path}`, {
     headers: {
@@ -1647,19 +2171,36 @@ async function traktFetch(path) {
 }
 
 async function traktRelated(tmdbId, type) {
-  // 1. Buscar slug de Trakt a partir del ID de TMDB
   const traktType = type === 'tv' ? 'show' : 'movie';
+  const endpoint  = traktType === 'show' ? 'shows' : 'movies';
+
   const results = await traktFetch(`/search/tmdb/${tmdbId}?type=${traktType}`);
   const hit = (results||[]).find(r => r.type === traktType);
   if (!hit) return [];
   const slug = hit[traktType]?.ids?.slug;
   if (!slug) return [];
 
-  // 2. Obtener películas/series relacionadas y extraer sus IDs de TMDB
-  const related = await traktFetch(`/${traktType === 'show' ? 'shows' : 'movies'}/${slug}/related?limit=20`);
-  return (related||[])
-    .map(item => item.ids?.tmdb)
-    .filter(Boolean);
+  const related = await traktFetch(`/${endpoint}/${slug}/related?limit=20`);
+  if (!related?.length) return [];
+
+  // Ratings en paralelo para los 10 primeros (los más relevantes)
+  const top10 = related.slice(0, 10);
+  const ratingsSettled = await Promise.allSettled(
+    top10.map(item => {
+      const s = item.ids?.slug;
+      return s ? traktFetch(`/${endpoint}/${s}/ratings`) : Promise.resolve(null);
+    })
+  );
+
+  return related.map((item, i) => {
+    const rd = i < 10 && ratingsSettled[i].status === 'fulfilled' ? ratingsSettled[i].value : null;
+    return {
+      id:           item.ids?.tmdb,
+      rank:         i + 1,
+      traktRating:  rd?.rating  || null,
+      traktVotes:   rd?.votes   || 0,
+    };
+  }).filter(r => r.id);
 }
 
 /* ══════════════════════════════════════════════════
@@ -1731,11 +2272,29 @@ function pickMovie(m) {
    LOAD SIMILAR MOVIES
 ══════════════════════════════════════════════════ */
 async function loadSimilar(movieId) {
+  // Caché hit → instantáneo, sin gastar cuota de APIs externas
+  const cached = loadSearchCache(movieId, mType());
+  if (cached) {
+    showLoading();
+    restoreFromCache(cached);
+    renderBanner(S.base);
+    recordSearch(S.base);
+    S.genres = new Set(); S.minYear = null; S.minScore = 0;
+    S.decade = null; S.platformIds.clear(); S.sort = 'score';
+    resetFilterUI();
+    buildGenrePills(); buildPlatformPills();
+    $('#filtersBar').classList.remove('hidden');
+    applyFilters();
+    hideLoading();
+    toast('⚡ Resultados desde caché', 'success');
+    return;
+  }
+
   showLoading();
   try {
     // Fetch base (con keywords) + genre list en paralelo
     const [base, genres] = await Promise.all([
-      tmdb(`/${mType()}/${movieId}`, { append_to_response: 'credits,keywords' }),
+      tmdb(`/${mType()}/${movieId}`, { append_to_response: 'credits,keywords,external_ids' }),
       tmdb(`/genre/${mType()}/list`),
     ]);
     S.base     = base;
@@ -1746,6 +2305,20 @@ async function loadSimilar(movieId) {
 
     renderBanner(base);
     recordSearch(base);
+
+    // Enriquecer película base con scores de crítica (en background, sin bloquear)
+    if (S.omdbKey || S.mdbKey) {
+      const baseImdb = base.external_ids?.imdb_id;
+      if (baseImdb) {
+        Promise.all([
+          S.omdbKey ? omdbFetch(baseImdb)    : Promise.resolve(null),
+          S.mdbKey  ? mdblistFetch(baseImdb) : Promise.resolve(null),
+        ]).then(([od, md]) => {
+          if (od) S.base._omdb = od;
+          if (md) S.base._mdb  = md;
+        });
+      }
+    }
 
     // Obtener candidatos: recommendations + similar + colección si existe
     setLabel(`Buscando recomendaciones…`);
@@ -1782,14 +2355,14 @@ async function loadSimilar(movieId) {
     collectionParts.forEach(m => candidates.push(m));
 
     // Trakt: candidatos adicionales si hay Client ID configurado
-    const srcTrakt = new Set();
+    const srcTrakt = new Map(); // id → rank (1=más popular)
     if (S.traktKey) {
       setLabel('Consultando Trakt…');
       try {
-        const traktIds = await traktRelated(movieId, t);
+        const traktItems = await traktRelated(movieId, t);
         let added = 0;
-        traktIds.forEach(tmdbId => {
-          srcTrakt.add(tmdbId);
+        traktItems.forEach(({ id: tmdbId, rank, traktRating, traktVotes }) => {
+          srcTrakt.set(tmdbId, { rank, traktRating, traktVotes });
           if (!seen.has(tmdbId)) {
             seen.add(tmdbId);
             candidates.push({ id: tmdbId, _source: 'trakt' });
@@ -1813,7 +2386,54 @@ async function loadSimilar(movieId) {
     setLabel(`Analizando ${candidates.length} candidatas…`);
     const details = await fetchBatch(candidates.map(m => m.id), mType());
 
-    // Puntuar y filtrar — función reutilizable para 1ª y 2ª vuelta
+    // Enriquecer con críticas externas en paralelo (caché 7 días cada una)
+    if (S.omdbKey || S.mdbKey) {
+      setLabel('Consultando fuentes de crítica…');
+      await Promise.allSettled(
+        details.filter(Boolean).map(async m => {
+          const imdbId = m.external_ids?.imdb_id;
+          if (!imdbId) return;
+          const [od, md] = await Promise.all([
+            S.omdbKey ? omdbFetch(imdbId)     : Promise.resolve(null),
+            S.mdbKey  ? mdblistFetch(imdbId)  : Promise.resolve(null),
+          ]);
+          if (od) m._omdb = od;
+          if (md) m._mdb  = md;
+        })
+      );
+    }
+
+    // Frecuencia de keywords en el pool — las raras valen más
+    const kwFreq = {};
+    const validPool = details.filter(Boolean);
+    validPool.forEach(m => mKeywords(m).forEach(k => { kwFreq[k.id] = (kwFreq[k.id]||0)+1; }));
+    const kwPoolSize = Math.max(validPool.length, 1);
+
+    // Géneros genéricos (señal débil sola)
+    const GENERIC_GENRES = new Set([18,35,28,53,10749,27,12,80,10752]);
+
+    // Tono: keywords y géneros que indican tono oscuro/ligero
+    const DARK_TERMS  = ['dark','kill','murder','death','violen','brutal','trauma','disturb','gore','terror','serial','drug','revenge','war','torture','abuse','dystopia','bleak','prison','corrupt','psycholog','nihil'];
+    const LIGHT_TERMS = ['comedy','fun','heartwarming','family','romance','musical','animat','fairy','slapstick','parody','satire','feel-good','whimsical','children','kids'];
+    const DARK_GENRES  = new Set([27,53,80,10752]); // Horror, Thriller, Crime, War
+    const LIGHT_GENRES = new Set([35,16,10751,10402]); // Comedy, Animation, Family, Music
+
+    function toneScore(m) {
+      let t = 0;
+      mKeywords(m).forEach(k => {
+        const n = (k.name||'').toLowerCase();
+        if (DARK_TERMS.some(w  => n.includes(w))) t += 1;
+        if (LIGHT_TERMS.some(w => n.includes(w))) t -= 1;
+      });
+      (m.genres||[]).forEach(g => {
+        if (DARK_GENRES.has(g.id))  t += 2;
+        if (LIGHT_GENRES.has(g.id)) t -= 2;
+      });
+      return t;
+    }
+    const baseTone = toneScore(base);
+
+    // Puntuar y filtrar
     const bGids     = new Set((base.genres||[]).map(g=>g.id));
     const bDir      = (base.credits?.crew||[]).find(c=>c.job==='Director'||c.job==='Creator');
     const bLeads    = new Set((base.credits?.cast||[]).slice(0,3).map(a=>a.id));
@@ -1822,6 +2442,7 @@ async function loadSimilar(movieId) {
     const bCountries= new Set((base.production_countries||[]).map(c=>c.iso_3166_1));
     const bYear     = +(mYear(base)||'0');
     const bRuntime  = mRuntime(base);
+    const bBudget   = base.budget || 0; // 0 = desconocido
     const collectionIds = new Set((base.belongs_to_collection
       ? (fetched[4]?.value?.parts||[]).map(p=>p.id) : []));
 
@@ -1836,15 +2457,16 @@ async function loadSimilar(movieId) {
       const mRt       = mRuntime(m);
       const mScore    = m.vote_average||0;
 
-      const sharedGenres    = [...mGids].filter(id=>bGids.has(id)).length;
-      const sharedKws       = [...mKws].filter(id=>S.baseKws.has(id)).length;
+      const sharedGenreIds  = [...mGids].filter(id=>bGids.has(id));
+      const sharedGenres    = sharedGenreIds.length;
+      const sharedKwIds     = [...mKws].filter(id=>S.baseKws.has(id));
       const sameDir         = bDir && mDir && bDir.id === mDir.id;
       const sharedStudios   = [...mStudioSet].filter(id=>bStudios.has(id)).length;
       const sharedCountries = [...mCountries].filter(c=>bCountries.has(c)).length;
       const inCollection    = collectionIds.has(m.id);
       const qualityOk       = mScore>=5.5 && (m.vote_count||0)>=80;
 
-      // Actores: protagonistas 3x más que secundarios
+      // Actores
       let actorScore = 0;
       mCast.forEach(a => {
         if (bLeads.has(a.id))        actorScore += 18;
@@ -1856,49 +2478,139 @@ async function loadSimilar(movieId) {
       let runtimeScore = 0;
       if (bRuntime>0 && mRt>0) {
         const diff = Math.abs(bRuntime - mRt);
-        if (diff <= 20)      runtimeScore = 10;
+        if (diff <= 20) runtimeScore = 10;
         else if (diff <= 40) runtimeScore = 5;
       }
 
       const sameEra  = bYear && mYearN && Math.abs(bYear-mYearN)<=5;
       const sameLang = base.original_language===m.original_language && m.original_language!=='en';
 
-      if (!inCollection && !sameDir && sharedGenres===0 && sharedKws===0 && actorScore===0) return null;
+      // Budget affinity: indie vs blockbuster (solo cuando ambos tienen datos)
+      const mBudget = m.budget || 0;
+      let budgetPenalty = 0;
+      if (bBudget > 0 && mBudget > 0) {
+        const ratio = Math.max(bBudget, mBudget) / Math.min(bBudget, mBudget);
+        if (ratio > 20) budgetPenalty = -12; // indie vs blockbuster extremo
+        else if (ratio > 8) budgetPenalty = -6;
+      }
+
+      if (!inCollection && !sameDir && sharedGenres===0 && sharedKwIds.length===0 && actorScore===0) return null;
       if (!qualityOk && !inCollection && !sameDir) return null;
 
       let score = 0;
-      if (inCollection)      score += 100;
-      score += sharedKws     * 8;
-      score += sharedGenres  * 15;
-      if (sameDir)           score += 30;
+      if (inCollection) score += 100;
+
+      // Keywords ponderadas por rareza en el pool
+      let kwScore = 0;
+      sharedKwIds.forEach(id => {
+        const ratio = (kwFreq[id]||1) / kwPoolSize;
+        kwScore += ratio < 0.10 ? 12 : ratio < 0.30 ? 6 : 2;
+      });
+      score += Math.min(kwScore, 50);
+
+      // Géneros + penalización si solo son genéricos sin otras señales
+      score += sharedGenres * 10;
+      const onlyGeneric = sharedGenres > 0 && sharedGenreIds.every(id => GENERIC_GENRES.has(id));
+      if (onlyGeneric && sharedKwIds.length === 0 && actorScore === 0 && !sameDir) score -= 15;
+
+      if (sameDir)  score += 30;
       score += actorScore;
-      score += sharedStudios * 10;
+      score += sharedStudios   * 10;
       score += sharedCountries * 8;
       score += runtimeScore;
-      if (sameEra)           score += 8;
-      if (sameLang)          score += 12;
-      if (mScore>=7)         score += 5;
-      score += tasteBonus(m);
+      if (sameEra)  score += 8;
+      if (sameLang) score += 12;
+      score += budgetPenalty;
+      if (mScore>=7) score += 5;
 
-      // Bonus consenso de fans: más fuentes = más confianza
+      // Bonus/penalización crítica — OMDB (RT críticos + Metacritic) + MDBList (Letterboxd + RT audience)
+      // Cap global ±25 para que la crítica no domine sobre similitud
+      {
+        let cb = 0;
+        if (m._omdb) {
+          const { rt, metacritic } = m._omdb;
+          if (rt !== null) {
+            if      (rt >= 90) cb += 12;
+            else if (rt >= 75) cb += 7;
+            else if (rt >= 60) cb += 3;
+            else if (rt <  30) cb -= 10;
+          }
+          if (metacritic !== null) {
+            if      (metacritic >= 80) cb += 10;
+            else if (metacritic >= 65) cb += 5;
+            else if (metacritic >= 50) cb += 2;
+            else if (metacritic <  30) cb -= 8;
+          }
+        }
+        if (m._mdb) {
+          const { letterboxd, rtAudience, mdbScore } = m._mdb;
+          if (letterboxd !== null) {
+            if      (letterboxd >= 80) cb += 10;
+            else if (letterboxd >= 70) cb += 6;
+            else if (letterboxd >= 60) cb += 2;
+            else if (letterboxd <  35) cb -= 6;
+          }
+          if (rtAudience !== null) {
+            if      (rtAudience >= 85) cb += 6;
+            else if (rtAudience >= 70) cb += 3;
+            else if (rtAudience <  40) cb -= 4;
+          }
+          // MDB aggregate solo como desempate positivo
+          if (mdbScore !== null && cb > 0 && mdbScore >= 70) cb += 3;
+        }
+        score += Math.min(Math.max(cb, -15), 25);
+      }
+
+      // Boost por premios (OMDB: "Won 3 Oscars…" / "Nominated for 1 Oscar…")
+      if (m._omdb?.awards) {
+        const aw = m._omdb.awards;
+        const won = aw.match(/Won (\d+) Oscar/i);
+        if (won)                                    score += Math.min(+won[1] * 3, 12);
+        else if (/Nominated for.*Oscar/i.test(aw))  score += 4;
+        else if (/Won \d+ Golden Globe/i.test(aw))  score += 3;
+      }
+
+      // Penalización tono: comedias vs thrillers oscuros, etc.
+      const toneDiff = Math.abs(baseTone - toneScore(m));
+      if (toneDiff >= 5)      score -= 25;
+      else if (toneDiff >= 3) score -= 10;
+
+      // Penalización idioma: buscas no-inglés → película en inglés baja
+      if (base.original_language !== 'en' &&
+          m.original_language    === 'en' &&
+          sharedKwIds.length < 3) {
+        score -= 8;
+      }
+
+      // Bonus consenso de fans con posición y nota Trakt
       const ss = S.sourceSets;
       if (ss) {
-        const srcs = (ss.rec.has(m.id)?1:0) + (ss.sim.has(m.id)?1:0) + (ss.trakt.has(m.id)?1:0);
+        const inTrakt = ss.trakt.has(m.id);
+        const srcs = (ss.rec.has(m.id)?1:0) + (ss.sim.has(m.id)?1:0) + (inTrakt?1:0);
         if (srcs >= 3)      score += 40;
         else if (srcs >= 2) score += 20;
-        else if (ss.trakt.has(m.id)) score += 15;
+        if (inTrakt) {
+          const { rank, traktRating } = ss.trakt.get(m.id);
+          if (srcs < 2) {
+            // solo en Trakt → usar posición
+            score += rank <= 3 ? 25 : rank <= 8 ? 15 : rank <= 15 ? 10 : 5;
+          }
+          // Bonus de calidad por nota Trakt (independiente de si ya tiene consenso)
+          if (traktRating >= 8.5)      score += 15;
+          else if (traktRating >= 7.5) score += 8;
+          else if (traktRating >= 7.0) score += 3;
+        }
       }
 
       m._score = score;
       return m;
     }
 
-    let firstPass = details.filter(Boolean).map(scoreMovie)
-      .filter(Boolean).sort((a,b)=>b._score-a._score);
+    let firstPass = details.filter(Boolean).map(scoreMovie).filter(Boolean);
 
     // Segunda vuelta: buscar similares de las top 5 para ampliar el pool
     setLabel('Segunda vuelta — buscando conexiones indirectas…');
-    const top5 = firstPass.slice(0,5).map(m=>m.id);
+    const top5 = firstPass.sort((a,b)=>b._score-a._score).slice(0,5).map(m=>m.id);
     const secondFetches = await Promise.allSettled(
       top5.map(id => tmdb(`/${mType()}/${id}/recommendations`, { page:1 }))
     );
@@ -1914,17 +2626,20 @@ async function loadSimilar(movieId) {
     // Cargar detalles de los nuevos candidatos de 2ª vuelta
     const newCandidates = candidates.slice(details.length);
     if (newCandidates.length > 0) {
-      const details2 = await fetchBatch(newCandidates.map(m=>m.id));
+      const details2 = await fetchBatch(newCandidates.map(m=>m.id), mType());
+      // Actualizar kwFreq con los nuevos candidatos
+      details2.filter(Boolean).forEach(m => mKeywords(m).forEach(k => { kwFreq[k.id] = (kwFreq[k.id]||0)+1; }));
       const secondPass = details2.filter(Boolean).map(scoreMovie).filter(Boolean);
-      firstPass = [...firstPass, ...secondPass].sort((a,b)=>b._score-a._score);
+      firstPass = [...firstPass, ...secondPass];
     }
 
-    // Deduplicar y quedarse con los 20 mejores
+    // Deduplicar, aplicar taste como 2ª etapa y quedarse con los 20 mejores
     const finalSeen = new Set();
-    const scored = firstPass.filter(m => {
-      if (finalSeen.has(m.id)) return false;
-      finalSeen.add(m.id); return true;
-    }).slice(0,20);
+    const scored = firstPass
+      .filter(m => { if (finalSeen.has(m.id)) return false; finalSeen.add(m.id); return true; })
+      .map(m => { m._totalScore = m._score + tasteBonus(m); return m; })
+      .sort((a,b) => b._totalScore - a._totalScore)
+      .slice(0, 20);
 
     S.movies   = scored;
     S.genres   = new Set();
@@ -1932,9 +2647,10 @@ async function loadSimilar(movieId) {
     S.minScore = 0;
 
     resetFilterUI();
-    buildGenrePills();
+    buildGenrePills(); buildPlatformPills();
     $('#filtersBar').classList.remove('hidden');
     applyFilters();
+    saveSearchCache(movieId, t);
     hideLoading();
 
   } catch(err) {
@@ -2057,7 +2773,7 @@ async function searchByDirector(personId, name) {
     $('#baseBanner').classList.remove('hidden');
 
     resetFilterUI();
-    buildGenrePills();
+    buildGenrePills(); buildPlatformPills();
     $('#filtersBar').classList.remove('hidden');
     applyFilters();
     hideLoading();
@@ -2068,13 +2784,51 @@ async function searchByDirector(personId, name) {
   }
 }
 
+async function searchBySaga(collectionId, name) {
+  showLoading();
+  setLabel(`Cargando saga: ${name}…`);
+  try {
+    const col = await tmdb(`/collection/${collectionId}`);
+    const parts = (col.parts||[]).sort((a,b) => (a.release_date||'').localeCompare(b.release_date||''));
+    const ids = parts.map(p => p.id);
+    const details = await fetchBatch(ids, 'movie');
+
+    S.movies  = details.filter(Boolean).sort((a,b) => (mYear(a)||'0').localeCompare(mYear(b)||'0'));
+    S.genres  = new Set();
+    S.minYear = null;
+    S.minScore = 0;
+    S.decade = null; S.platformIds.clear(); S.sort = 'score';
+
+    $('#baseBanner').innerHTML = `
+      <div class="banner-wrap">
+        <div class="banner-content" style="padding:20px 24px">
+          <div class="banner-info">
+            <div class="banner-eyebrow">🎬 Saga completa</div>
+            <div class="banner-title">${esc(name)}</div>
+            <div class="banner-meta">${S.movies.length} película${S.movies.length!==1?'s':''}</div>
+          </div>
+        </div>
+      </div>`;
+    $('#baseBanner').classList.remove('hidden');
+
+    resetFilterUI();
+    buildGenrePills(); buildPlatformPills();
+    $('#filtersBar').classList.remove('hidden');
+    applyFilters();
+    hideLoading();
+  } catch(err) {
+    hideLoading();
+    toast(`Error cargando saga: ${err.message}`, 'error');
+  }
+}
+
 async function fetchBatch(ids, type = mType()) {
   const results = [];
   const BATCH = 10;
   for (let i = 0; i < ids.length; i += BATCH) {
     const chunk = ids.slice(i, i + BATCH);
     const settled = await Promise.allSettled(
-      chunk.map(id => tmdb(`/${type}/${id}`, { append_to_response: 'credits,keywords,watch/providers' }))
+      chunk.map(id => tmdb(`/${type}/${id}`, { append_to_response: 'credits,keywords,watch/providers,external_ids' }))
     );
     settled.forEach(r => results.push(r.status === 'fulfilled' ? r.value : null));
     if (i + BATCH < ids.length) await delay(150);
@@ -2113,15 +2867,66 @@ function buildGenrePills() {
 
 function resetFilterUI() {
   $$('.genre-pill').forEach(el => el.classList.remove('active'));
+  $$('.decade-pill').forEach(el => el.classList.remove('active'));
+  $$('.platform-pill').forEach(el => el.classList.remove('active'));
   $('#scoreSlider').value = 0;
   $('#scoreVal').textContent = '0';
   $('#yearInput').value = '';
+  $('#sortSelect').value = 'score';
 }
 
 function clearFilters() {
   S.genres.clear(); S.minYear = null; S.minScore = 0;
+  S.decade = null; S.platformIds.clear(); S.sort = 'score';
   resetFilterUI();
   applyFilters();
+}
+
+/* ══════════════════════════════════════════════════
+   SORT + PLATFORM
+══════════════════════════════════════════════════ */
+function sortResults(list, mode) {
+  const copy = [...list];
+  switch (mode) {
+    case 'tmdb':        return copy.sort((a,b) => (b.vote_average||0) - (a.vote_average||0));
+    case 'letterboxd':  return copy.sort((a,b) => (b._mdb?.letterboxd||0) - (a._mdb?.letterboxd||0));
+    case 'rt':          return copy.sort((a,b) => (b._omdb?.rt||0) - (a._omdb?.rt||0));
+    case 'year_desc':   return copy.sort((a,b) => (mYear(b)||'0').localeCompare(mYear(a)||'0'));
+    case 'year_asc':    return copy.sort((a,b) => (mYear(a)||'0').localeCompare(mYear(b)||'0'));
+    default:            return copy.sort((a,b) => (b._totalScore||0) - (a._totalScore||0));
+  }
+}
+
+function buildPlatformPills() {
+  const providerMap = new Map();
+  S.movies.forEach(m => {
+    const s = streamForCountry(m, S.country);
+    [...s.flatrate, ...s.rent, ...s.buy].forEach(p => {
+      if (!providerMap.has(p.provider_id))
+        providerMap.set(p.provider_id, { name: p.provider_name, logo: p.logo_path });
+    });
+  });
+  const container = $('#platformPills');
+  const group     = $('#platformGroup');
+  if (!container || !group) return;
+  if (!providerMap.size) { group.style.display = 'none'; return; }
+  group.style.display = '';
+  container.innerHTML = [...providerMap.entries()]
+    .sort((a,b) => a[1].name.localeCompare(b[1].name))
+    .map(([id, {name, logo}]) => `
+      <button class="platform-pill${S.platformIds.has(id)?' active':''}" data-pid="${id}">
+        ${logo ? `<img src="${IMG92}${logo}" alt="">` : ''}
+        ${esc(name)}
+      </button>`).join('');
+  container.querySelectorAll('.platform-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pid = +btn.dataset.pid;
+      if (S.platformIds.has(pid)) S.platformIds.delete(pid);
+      else S.platformIds.add(pid);
+      btn.classList.toggle('active');
+      applyFilters();
+    });
+  });
 }
 
 /* ══════════════════════════════════════════════════
@@ -2145,6 +2950,23 @@ function applyFilters() {
 
   if (S.minScore > 0)
     list = list.filter(m => (m.vote_average||0) >= S.minScore);
+
+  if (S.decade !== null) {
+    list = list.filter(m => {
+      const yr = +((m.release_date||m.first_air_date||'0').slice(0,4));
+      return yr >= S.decade && yr < S.decade + 10;
+    });
+  }
+
+  if (S.platformIds.size) {
+    list = list.filter(m => {
+      const s = streamForCountry(m, S.country);
+      return [...s.flatrate, ...s.rent, ...s.buy].some(p => S.platformIds.has(p.provider_id));
+    });
+  }
+
+  // Ordenar
+  list = sortResults(list, S.sort);
 
   // Marcar vistas
   list.forEach(m => { m._seen = globalSeen.has(m.id) || fb.seen.includes(m.id); });
@@ -2184,7 +3006,10 @@ function renderBanner(m) {
           <div class="banner-title">${esc(mTitle(m))} <span style="color:var(--text-muted);font-weight:400">(${yr})</span></div>
           <div class="banner-meta">${genres}${dir ? ` · <button class="btn-director-banner" data-did="${dir.id}" data-dname="${esc(dir.name)}">${esc(dir.name)}</button>` : ''}${score?' · ⭐ '+score:''}</div>
           ${m.overview ? `<div class="banner-overview">${esc(m.overview)}</div>` : ''}
-          <button class="btn-details" style="margin-top:12px" onclick="openDetail(S.base)">Ver ficha completa</button>
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <button class="btn-details" onclick="openDetail(S.base)">Ver ficha completa</button>
+            <button class="btn-feedback" onclick="shareSearch()" title="Copiar enlace para compartir">📤 Compartir</button>
+          </div>
         </div>
       </div>
     </div>`;
@@ -2215,6 +3040,12 @@ function renderCards(list) {
   );
   grid.querySelectorAll('.btn-wl').forEach(btn =>
     btn.addEventListener('click', () => toggleWatchlist(+btn.dataset.wid))
+  );
+  grid.querySelectorAll('.morelike-btn').forEach(btn =>
+    btn.addEventListener('click', () => loadSimilar(+btn.dataset.mlid))
+  );
+  grid.querySelectorAll('.sim-pill-link[data-cid]').forEach(btn =>
+    btn.addEventListener('click', () => searchBySaga(+btn.dataset.cid, btn.dataset.cname))
   );
 }
 
@@ -2264,11 +3095,16 @@ function cardHTML(m, rank) {
 
       ${m.overview ? `<div class="card-overview">${esc(m.overview)}</div>` : ''}
 
+      ${(m._omdb || m._mdb) ? criticBadgesHTML(m._omdb, m._mdb) : ''}
+
       ${reasons.length ? `
       <div class="card-section">
         <span class="section-eyebrow">Parecida porque</span>
         <div class="sim-pills">
-          ${reasons.map(r=>`<span class="sim-pill ${r.t}">${r.v}</span>`).join('')}
+          ${reasons.map(r => r.cid
+            ? `<button class="sim-pill ${r.t} sim-pill-link" data-cid="${r.cid}" data-cname="${esc(r.cname)}">${esc(r.v)}</button>`
+            : `<span class="sim-pill ${r.t}">${esc(r.v)}</span>`
+          ).join('')}
         </div>
       </div>` : ''}
 
@@ -2281,6 +3117,7 @@ function cardHTML(m, rank) {
 
       <div class="card-footer">
         <button class="btn-details" data-id="${m.id}">Ver ficha</button>
+        <button class="btn-feedback morelike-btn" data-mlid="${m.id}" title="Buscar películas similares a esta">🔍 Más como</button>
         <button class="btn-feedback${m._seen?' seen':''}" onclick="toggleSeen(${m.id})"
           title="${m._seen?'Quitar de vistas':'Marcar como vista'}">
           ${m._seen?'✓ Vista':'👁 Ya la vi'}
@@ -2294,6 +3131,29 @@ function cardHTML(m, rank) {
     </div>
     ${m._seen ? '<div class="card-seen-overlay">VISTA</div>' : ''}
   </div>`;
+}
+
+/* ── Critic scores badges (OMDB + MDBList) ── */
+function criticBadgesHTML(omdb, mdb) {
+  const parts = [];
+  if (omdb?.rt !== null && omdb?.rt !== undefined) {
+    const cls  = omdb.rt >= 60 ? 'rt-fresh' : 'rt-rotten';
+    const icon = omdb.rt >= 60 ? '🍅' : '🤢';
+    parts.push(`<span class="critic-badge ${cls}">${icon} ${omdb.rt}%</span>`);
+  }
+  if (omdb?.metacritic !== null && omdb?.metacritic !== undefined) {
+    const cls = omdb.metacritic >= 61 ? 'mc-good' : omdb.metacritic >= 40 ? 'mc-mixed' : 'mc-bad';
+    parts.push(`<span class="critic-badge ${cls}">🎭 ${omdb.metacritic}</span>`);
+  }
+  if (mdb?.letterboxd !== null && mdb?.letterboxd !== undefined) {
+    const cls = mdb.letterboxd >= 70 ? 'mc-good' : mdb.letterboxd >= 55 ? 'mc-mixed' : 'mc-bad';
+    parts.push(`<span class="critic-badge ${cls}">🎞 ${mdb.letterboxd}</span>`);
+  }
+  if (mdb?.rtAudience !== null && mdb?.rtAudience !== undefined) {
+    const cls = mdb.rtAudience >= 70 ? 'rt-fresh' : 'rt-rotten';
+    parts.push(`<span class="critic-badge ${cls}">👥 ${mdb.rtAudience}%</span>`);
+  }
+  return parts.length ? `<div class="critic-scores">${parts.join('')}</div>` : '';
 }
 
 /* ── Score Ring SVG ── */
@@ -2357,8 +3217,10 @@ function similarityReasons(m) {
   if (!S.base) return out;
 
   // Same collection
-  if (S.base.belongs_to_collection && m._score >= 100) {
-    out.push({ t:'genre', v: `Saga: ${S.base.belongs_to_collection.name}` });
+  const bColl = S.base.belongs_to_collection;
+  const mColl = m.belongs_to_collection;
+  if (bColl && ((mColl && mColl.id === bColl.id) || m._score >= 100)) {
+    out.push({ t:'genre', v: `Saga: ${bColl.name}`, cid: bColl.id, cname: bColl.name });
   }
 
   // Shared keywords
@@ -2423,9 +3285,14 @@ function similarityReasons(m) {
   const ss = S.sourceSets;
   if (ss) {
     const srcs = (ss.rec.has(m.id)?1:0) + (ss.sim.has(m.id)?1:0) + (ss.trakt.has(m.id)?1:0);
-    if (srcs >= 3)           out.unshift({ t:'consensus', v:'🔥 Consenso total' });
-    else if (srcs >= 2)      out.unshift({ t:'consensus', v:'👥 Coinciden varias fuentes' });
-    else if (ss.trakt.has(m.id)) out.push({ t:'trakt', v:'🟠 Fans de Trakt' });
+    if (srcs >= 3)      out.unshift({ t:'consensus', v:'🔥 Consenso total' });
+    else if (srcs >= 2) out.unshift({ t:'consensus', v:'👥 Coinciden varias fuentes' });
+    else if (ss.trakt.has(m.id)) {
+      const { rank, traktRating } = ss.trakt.get(m.id);
+      const label  = rank <= 3 ? '🟠 Top Trakt' : '🟠 Fans Trakt';
+      const rating = traktRating ? ` ${traktRating.toFixed(1)}/10` : '';
+      out.push({ t:'trakt', v: label + rating });
+    }
   }
 
   return out.slice(0,5);
@@ -2448,6 +3315,9 @@ function openDetail(m) {
                   m.number_of_seasons ? `${m.number_of_seasons} temporada${m.number_of_seasons>1?'s':''}` : null;
   const stream  = streamForCountry(m, S.country);
   const reasons = similarityReasons(m);
+
+  const seenNow = getGlobalSeen().has(m.id);
+  const wlNow   = isInWatchlist(m.id);
 
   const seenP=new Set(); const allP=[];
   [...stream.flatrate.map(p=>({...p,lbl:'Incluido en suscripción'})),
@@ -2478,6 +3348,11 @@ function openDetail(m) {
   $('#detailContent').innerHTML = `
     ${heroBlock}
     <div class="modal-body">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">
+        <button class="btn-details" onclick="$('#detailModal').classList.add('hidden');loadSimilar(${m.id})">🔍 Más como esta</button>
+        <button class="btn-feedback${seenNow?' seen':''}" id="detailSeenBtn" onclick="toggleSeen(${m.id});this.classList.toggle('seen');this.textContent=this.classList.contains('seen')?'✓ Vista':'👁 Ya la vi'">${seenNow?'✓ Vista':'👁 Ya la vi'}</button>
+        <button class="btn-feedback${wlNow?' watchlisted':''}" id="detailWlBtn" onclick="toggleWatchlist(${m.id});this.classList.toggle('watchlisted');this.textContent=this.classList.contains('watchlisted')?'📌 Guardada':'📌 Ver después'">${wlNow?'📌 Guardada':'📌 Ver después'}</button>
+      </div>
       ${m.tagline?`<p style="font-style:italic;color:var(--text-muted);margin-bottom:18px">"${esc(m.tagline)}"</p>`:''}
 
       <div class="m-section">
@@ -2501,8 +3376,16 @@ function openDetail(m) {
           </div>
           ${m.budget>0?`<div class="stat-item"><div class="stat-key">Presupuesto</div><div class="stat-val">$${(m.budget/1e6).toFixed(0)}M</div></div>`:''}
           ${m.revenue>0?`<div class="stat-item"><div class="stat-key">Recaudación</div><div class="stat-val">$${(m.revenue/1e6).toFixed(0)}M</div></div>`:''}
+          ${m._omdb?.awards && !/^N\/A$/i.test(m._omdb.awards)?`<div class="stat-item" style="grid-column:1/-1"><div class="stat-key">Premios</div><div class="stat-val">${esc(m._omdb.awards)}</div></div>`:''}
         </div>
       </div>
+
+      ${(m._omdb||m._mdb)?`
+      <div class="m-section">
+        <div class="m-section-title">Puntuaciones de la crítica</div>
+        ${criticBadgesHTML(m._omdb, m._mdb)}
+      </div>`:''}
+
 
       ${cast.length?`
       <div class="m-section">
