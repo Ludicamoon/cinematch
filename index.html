@@ -805,7 +805,9 @@
     .sim-pill.dir    { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
     .sim-pill.actor  { background: rgba(239,68,68,0.15);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
     .sim-pill.lang   { background: rgba(6,182,212,0.15);  color: #67e8f9; border: 1px solid rgba(6,182,212,0.3); }
-    .sim-pill.score  { background: rgba(167,139,250,0.15);color: #c4b5fd; border: 1px solid rgba(167,139,250,0.3); }
+    .sim-pill.score     { background: rgba(167,139,250,0.15);color: #c4b5fd; border: 1px solid rgba(167,139,250,0.3); }
+    .sim-pill.consensus { background: rgba(251,191,36,0.15); color: #fde68a; border: 1px solid rgba(251,191,36,0.35); font-weight:700; }
+    .sim-pill.trakt     { background: rgba(237,95,0,0.12);   color: #fb923c; border: 1px solid rgba(237,95,0,0.3); }
 
     /* Streaming */
     .streaming-row {
@@ -1346,7 +1348,8 @@ const S = {
   acTimer:   null,
   acList:    [],
   acIdx:     -1,
-  hideSeen:  false,
+  hideSeen:   false,
+  sourceSets: null,
   mode:      'movie',   // 'movie' | 'tv'
 };
 
@@ -1761,15 +1764,17 @@ async function loadSimilar(movieId) {
     const seen = new Set([movieId]);
     const candidates = [];
     const collectionParts = [];
+    const srcRec = new Set();  // TMDB recommendations
+    const srcSim = new Set();  // TMDB similar
     fetched.forEach((r, i) => {
       if (r.status !== 'fulfilled') return;
       if (i >= 4) {
-        // Colección — siempre incluir, sin límite de candidatos
         (r.value.parts||[]).forEach(m => {
           if (!seen.has(m.id)) { seen.add(m.id); collectionParts.push(m); }
         });
       } else {
         (r.value.results||[]).forEach(m => {
+          if (i < 2) srcRec.add(m.id); else srcSim.add(m.id);
           if (!seen.has(m.id) && candidates.length < 40) { seen.add(m.id); candidates.push(m); }
         });
       }
@@ -1777,12 +1782,14 @@ async function loadSimilar(movieId) {
     collectionParts.forEach(m => candidates.push(m));
 
     // Trakt: candidatos adicionales si hay Client ID configurado
+    const srcTrakt = new Set();
     if (S.traktKey) {
       setLabel('Consultando Trakt…');
       try {
         const traktIds = await traktRelated(movieId, t);
         let added = 0;
         traktIds.forEach(tmdbId => {
+          srcTrakt.add(tmdbId);
           if (!seen.has(tmdbId)) {
             seen.add(tmdbId);
             candidates.push({ id: tmdbId, _source: 'trakt' });
@@ -1794,6 +1801,7 @@ async function loadSimilar(movieId) {
         console.warn('Trakt falló, continuando sin él:', e.message);
       }
     }
+    S.sourceSets = { rec: srcRec, sim: srcSim, trakt: srcTrakt };
 
     if (!candidates.length) {
       hideLoading();
@@ -1865,12 +1873,21 @@ async function loadSimilar(movieId) {
       if (sameDir)           score += 30;
       score += actorScore;
       score += sharedStudios * 10;
-      score += sharedCountries * 8;  // país de producción
-      score += runtimeScore;          // duración similar
+      score += sharedCountries * 8;
+      score += runtimeScore;
       if (sameEra)           score += 8;
       if (sameLang)          score += 12;
       if (mScore>=7)         score += 5;
       score += tasteBonus(m);
+
+      // Bonus consenso de fans: más fuentes = más confianza
+      const ss = S.sourceSets;
+      if (ss) {
+        const srcs = (ss.rec.has(m.id)?1:0) + (ss.sim.has(m.id)?1:0) + (ss.trakt.has(m.id)?1:0);
+        if (srcs >= 3)      score += 40;
+        else if (srcs >= 2) score += 20;
+        else if (ss.trakt.has(m.id)) score += 15;
+      }
 
       m._score = score;
       return m;
@@ -2400,6 +2417,15 @@ function similarityReasons(m) {
   const bs = S.base.vote_average||0, ms = m.vote_average||0;
   if (bs>0 && ms>0 && Math.abs(bs-ms)<1.2 && ms>=6) {
     out.push({ t:'score', v:`Puntuación similar (${ms.toFixed(1)})` });
+  }
+
+  // Consenso de fans
+  const ss = S.sourceSets;
+  if (ss) {
+    const srcs = (ss.rec.has(m.id)?1:0) + (ss.sim.has(m.id)?1:0) + (ss.trakt.has(m.id)?1:0);
+    if (srcs >= 3)           out.unshift({ t:'consensus', v:'🔥 Consenso total' });
+    else if (srcs >= 2)      out.unshift({ t:'consensus', v:'👥 Coinciden varias fuentes' });
+    else if (ss.trakt.has(m.id)) out.push({ t:'trakt', v:'🟠 Fans de Trakt' });
   }
 
   return out.slice(0,5);
