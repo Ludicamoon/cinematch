@@ -23,6 +23,7 @@
       --text: #f0f0f5;
       --text-muted: #8080a0;
       --text-dim: #50506a;
+      --surface-alt: rgba(255,255,255,0.05);
     }
 
     html { scroll-behavior: smooth; }
@@ -48,8 +49,8 @@
     .tt::after {
       content: attr(data-tt);
       position: absolute;
-      bottom: calc(100% + 10px);
-      left: 50%; transform: translateX(-50%);
+      top: calc(100% + 10px);
+      left: 50%; transform: translateX(-50%) translateY(-4px);
       background: #1e1e2e;
       border: 1px solid var(--border-hover);
       color: var(--text);
@@ -60,7 +61,6 @@
       pointer-events: none;
       opacity: 0;
       transition: opacity 0.18s, transform 0.18s;
-      transform: translateX(-50%) translateY(4px);
       z-index: 500;
       box-shadow: 0 6px 20px rgba(0,0,0,0.5);
     }
@@ -69,7 +69,7 @@
       transform: translateX(-50%) translateY(0);
     }
     /* Los del extremo derecho se anclan a la derecha para no salirse */
-    .tt-left::after { left: auto; right: 0; transform: translateY(4px); }
+    .tt-left::after { left: auto; right: 0; transform: translateY(-4px); }
     .tt-left:hover::after { transform: translateY(0); }
 
     /* ─── API KEY MODAL ─── */
@@ -90,6 +90,8 @@
       max-width: 460px;
       width: 100%;
       text-align: center;
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
     .api-modal .film-icon {
@@ -832,13 +834,15 @@
     .sim-pill.genre  { background: rgba(99,102,241,0.15); color: #a5b4fc; border: 1px solid rgba(99,102,241,0.3); }
     .sim-pill.era    { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
     .sim-pill.dir    { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
-    .sim-pill.actor  { background: rgba(239,68,68,0.15);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
     .sim-pill.lang   { background: rgba(6,182,212,0.15);  color: #67e8f9; border: 1px solid rgba(6,182,212,0.3); }
     .sim-pill.score     { background: rgba(167,139,250,0.15);color: #c4b5fd; border: 1px solid rgba(167,139,250,0.3); }
     .sim-pill.consensus { background: rgba(251,191,36,0.15); color: #fde68a; border: 1px solid rgba(251,191,36,0.35); font-weight:700; }
     .sim-pill.trakt     { background: rgba(237,95,0,0.12);   color: #fb923c; border: 1px solid rgba(237,95,0,0.3); }
     .sim-pill-link      { cursor: pointer; transition: opacity 0.15s; }
     .sim-pill-link:hover { opacity: 0.72; }
+
+    .sim-radar-wrap { display:flex; align-items:center; gap:20px; flex-wrap:wrap; padding: 10px 28px 10px 28px; }
+    .sim-radar-wrap svg { flex-shrink:0; overflow:visible; }
 
     .critic-scores { display:flex; gap:6px; flex-wrap:wrap; margin-top:4px; }
     .critic-badge {
@@ -1309,6 +1313,18 @@
       </a>
       — agrega Letterboxd, RT Audience, Trakt y 8 fuentes más en una llamada
     </p>
+    <label class="form-label" for="tasteKeyInput" style="margin-top:18px">
+      API key de TasteDive <span style="color:var(--text-dim);font-weight:400">(opcional — añade collaborative filtering)</span>
+    </label>
+    <input type="text" id="tasteKeyInput" class="form-input"
+           placeholder="Pega aquí tu API key de TasteDive…" autocomplete="off" spellcheck="false">
+    <p class="help-text">
+      Gratis en
+      <a href="https://tastedive.com/register/api" target="_blank" rel="noopener">
+        tastedive.com → Register for API
+      </a>
+      — 300 consultas/día, añade una 5ª fuente basada en gustos de usuarios reales
+    </p>
     <button class="btn-primary" id="saveKeyBtn">Empezar →</button>
   </div>
 </div>
@@ -1337,8 +1353,10 @@
       <span id="traktBadge" class="trakt-badge hidden tt" data-tt="Trakt activo — amplía candidatos con listas de fans">🟠 Trakt</span>
       <span id="omdbBadge" class="trakt-badge hidden tt" data-tt="OMDB activo — Rotten Tomatoes % y Metacritic" style="background:rgba(188,40,40,0.15);color:#f87171;border-color:rgba(188,40,40,0.3)">🍅 OMDB</span>
       <span id="mdbBadge" class="trakt-badge hidden tt" data-tt="MDBList activo — Letterboxd, RT Audience y 8 fuentes más" style="background:rgba(99,102,241,0.15);color:#a5b4fc;border-color:rgba(99,102,241,0.3)">🎞 MDB</span>
+      <span id="tasteBadge" class="trakt-badge hidden tt" data-tt="TasteDive activo — collaborative filtering de usuarios reales" style="background:rgba(20,184,166,0.15);color:#5eead4;border-color:rgba(20,184,166,0.3)">💚 Taste</span>
       <button id="watchlistBtn" class="watchlist-badge hidden tt" data-tt="Ver después — tu watchlist" onclick="openWatchlist()">📌 0</button>
       <button id="tastesBtn" class="btn-icon hidden tt" data-tt="Tu perfil de gustos" onclick="openTastes()">📊</button>
+      <button id="surpriseBtn" class="btn-icon hidden tt" data-tt="Sorpréndeme — búsqueda aleatoria de tu historial" onclick="surpriseMe()">🎲</button>
       <div class="history-wrap">
         <button id="historyBtn" class="btn-icon hidden tt tt-left" data-tt="Historial de búsquedas" onclick="openHistory()">🕐</button>
         <div id="historyPanel" class="history-panel hidden"></div>
@@ -1490,14 +1508,14 @@ const LANGS = {
    STATE
 ══════════════════════════════════════════════════ */
 const S = {
-  apiKey:    localStorage.getItem('tmdb_key')   || '',
+  apiKey:    localStorage.getItem('tmdb_key')    || '',
   traktKey:  localStorage.getItem('trakt_key')  || '',
   omdbKey:   localStorage.getItem('omdb_key')   || '',
   mdbKey:    localStorage.getItem('mdb_key')    || '',
+  tasteKey:  localStorage.getItem('taste_key')  || '',
   country:   localStorage.getItem('tmdb_country') || 'ES',
-  base:      null,
-  baseCred:  null,
-  baseKws:   new Set(),
+  base:    null,
+  baseKws: new Set(),
   genreMap:  {},
   movies:    [],
   filtered:  [],
@@ -1580,7 +1598,18 @@ function saveHistory(arr) {
 }
 function updateHistoryBadge() {
   const hist = getHistory();
-  $('#historyBtn').classList.toggle('hidden', hist.length === 0);
+  const empty = hist.length === 0;
+  $('#historyBtn').classList.toggle('hidden', empty);
+  $('#surpriseBtn').classList.toggle('hidden', empty);
+}
+
+function surpriseMe() {
+  const hist = getHistory();
+  if (!hist.length) { toast('Todavía no hay historial — busca algunas películas primero', 'error'); return; }
+  const pick = hist[Math.floor(Math.random() * hist.length)];
+  toast(`🎲 Sorprendiendo con: ${pick.title}`, 'success');
+  if ((pick.type || 'movie') !== S.mode) setMode(pick.type || 'movie');
+  loadSimilar(pick.id);
 }
 function openHistory() {
   const panel = $('#historyPanel');
@@ -1654,8 +1683,8 @@ function showShareModal(url) {
           style="flex:1;padding:10px 12px;border-radius:9px;border:1px solid var(--border-hover);
                  background:var(--card);color:var(--text);font-size:13px;outline:none">
         <button onclick="
-          document.getElementById('shareUrlInput').select();
-          document.execCommand('copy');
+          navigator.clipboard.writeText(document.getElementById('shareUrlInput').value)
+            .catch(()=>{document.getElementById('shareUrlInput').select();document.execCommand('copy');});
           this.textContent='✓ Copiado';
           setTimeout(()=>document.getElementById('shareModal').remove(),1200)
         " style="padding:10px 16px;border-radius:9px;background:var(--accent);color:white;
@@ -1887,10 +1916,11 @@ function boot() {
   $('#saveKeyBtn').addEventListener('click', saveKey);
   $('#apiKeyInput').addEventListener('keydown', e => { if(e.key==='Enter') saveKey(); });
   $('#editKeyBtn').addEventListener('click', () => {
-    $('#apiKeyInput').value   = S.apiKey;
-    $('#traktKeyInput').value = S.traktKey;
-    $('#omdbKeyInput').value  = S.omdbKey;
-    $('#mdbKeyInput').value   = S.mdbKey;
+    $('#apiKeyInput').value    = S.apiKey;
+    $('#traktKeyInput').value  = S.traktKey;
+    $('#omdbKeyInput').value   = S.omdbKey;
+    $('#mdbKeyInput').value    = S.mdbKey;
+    $('#tasteKeyInput').value  = S.tasteKey;
     $('#apiKeyModal').classList.remove('hidden');
   });
 
@@ -1972,12 +2002,17 @@ function saveKey() {
   S.mdbKey = mk;
   if (mk) localStorage.setItem('mdb_key', mk);
   else localStorage.removeItem('mdb_key');
+  const tdk = $('#tasteKeyInput').value.trim();
+  S.tasteKey = tdk;
+  if (tdk) localStorage.setItem('taste_key', tdk);
+  else localStorage.removeItem('taste_key');
   $('#traktBadge').classList.toggle('hidden', !tk);
   $('#omdbBadge').classList.toggle('hidden', !ok);
   $('#mdbBadge').classList.toggle('hidden', !mk);
+  $('#tasteBadge').classList.toggle('hidden', !tdk);
   $('#apiKeyModal').classList.add('hidden');
   showApp();
-  const parts = ['Guardado ✓', tk ? 'Trakt 🟠' : '', ok ? 'OMDB 🍅' : '', mk ? 'MDBList 🎞' : ''].filter(Boolean);
+  const parts = ['Guardado ✓', tk ? 'Trakt 🟠' : '', ok ? 'OMDB 🍅' : '', mk ? 'MDBList 🎞' : '', tdk ? 'TasteDive 💚' : ''].filter(Boolean);
   toast(parts.join(' · '), 'success');
 }
 
@@ -1987,6 +2022,7 @@ function showApp() {
   $('#traktBadge').classList.toggle('hidden', !S.traktKey);
   $('#omdbBadge').classList.toggle('hidden', !S.omdbKey);
   $('#mdbBadge').classList.toggle('hidden', !S.mdbKey);
+  $('#tasteBadge').classList.toggle('hidden', !S.tasteKey);
   updateWatchlistBadge();
   updateHistoryBadge();
   // Botón de perfil visible si hay al menos 1 búsqueda
@@ -2041,13 +2077,16 @@ function saveSearchCache(movieId, type) {
     const payload = {
       movies:     S.movies,
       base:       S.base,
-      baseCred:   S.baseCred,
       baseKws:    [...S.baseKws],
       genreMap:   S.genreMap,
       sourceSets: S.sourceSets ? {
         rec:   [...S.sourceSets.rec],
         sim:   [...S.sourceSets.sim],
         trakt: [...S.sourceSets.trakt.entries()],
+        disc:  [...(S.sourceSets.disc  || [])],
+        taste: [...(S.sourceSets.taste || [])],
+        lists: [...(S.sourceSets.lists || [])],
+        wiki:  [...(S.sourceSets.wiki  || [])],
       } : null,
       ts: Date.now(),
     };
@@ -2071,15 +2110,18 @@ function loadSearchCache(movieId, type) {
 }
 
 function restoreFromCache(data) {
-  S.movies   = data.movies;
-  S.base     = data.base;
-  S.baseCred = data.baseCred;
-  S.baseKws  = new Set(data.baseKws);
+  S.movies  = data.movies;
+  S.base    = data.base;
+  S.baseKws = new Set(data.baseKws);
   S.genreMap = data.genreMap;
   S.sourceSets = data.sourceSets ? {
     rec:   new Set(data.sourceSets.rec),
     sim:   new Set(data.sourceSets.sim),
     trakt: new Map(data.sourceSets.trakt),
+    disc:  new Set(data.sourceSets.disc  || []),
+    taste: new Set(data.sourceSets.taste || []),
+    lists: new Set(data.sourceSets.lists || []),
+    wiki:  new Set(data.sourceSets.wiki  || []),
   } : null;
 }
 
@@ -2168,6 +2210,83 @@ async function traktFetch(path) {
   });
   if (!r.ok) throw new Error(`Trakt HTTP ${r.status}`);
   return r.json();
+}
+
+async function tasteDiveFetch(title, type) {
+  const tdType = type === 'tv' ? 'shows' : 'movies';
+  const prefix = type === 'tv' ? 'show:' : 'movie:';
+  const url = `https://tastedive.com/api/similar?q=${encodeURIComponent(prefix + title)}&type=${tdType}&limit=20&k=${encodeURIComponent(S.tasteKey)}&info=0`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`TasteDive ${r.status}`);
+  const data = await r.json();
+  return (data?.Similar?.Results || []).map(item => item.Name).filter(Boolean);
+}
+
+async function fetchTmdbLists(movieId) {
+  const data = await tmdb(`/movie/${movieId}/lists`, { page: 1 });
+  const lists = (data?.results || [])
+    .filter(l => l.item_count >= 5 && l.item_count <= 400)
+    .sort((a, b) => (b.favorite_count || 0) - (a.favorite_count || 0))
+    .slice(0, 3);
+  if (!lists.length) return [];
+  const details = await Promise.allSettled(lists.map(l => tmdb(`/list/${l.id}`)));
+  const ids = new Set();
+  details.forEach(r => {
+    if (r.status !== 'fulfilled') return;
+    (r.value?.items || []).forEach(m => {
+      if (m.id && m.id !== movieId && (m.media_type === 'movie' || !m.media_type)) ids.add(m.id);
+    });
+  });
+  return [...ids];
+}
+
+async function fetchWikiCategories(title, year, type) {
+  const W = 'https://en.wikipedia.org/w/api.php';
+  const suffix = type === 'tv' ? 'TV series' : 'film';
+
+  // 1. Encontrar el artículo de Wikipedia
+  const s = await fetch(`${W}?action=query&list=search&srsearch=${encodeURIComponent(`${title} ${year} ${suffix}`)}&srlimit=3&format=json&origin=*`).then(r=>r.json());
+  const pageId = s?.query?.search?.[0]?.pageid;
+  if (!pageId) return [];
+
+  // 2. Obtener categorías del artículo
+  const cd = await fetch(`${W}?action=query&pageids=${pageId}&prop=categories&cllimit=100&clshow=!hidden&format=json&origin=*`).then(r=>r.json());
+  const SKIP = [/^(American|British|English-language|French|Italian|Spanish|German|Japanese|Korean|Indian|Chinese|Australian|Canadian|Irish|Hong Kong) (film|television)/i,
+                /shot in|produced by|directed by|written by|Wikipedia|stub|accuracy|^List|IMAX|format|soundtrack|budget/i];
+  const useCats = (cd?.query?.pages?.[pageId]?.categories || [])
+    .map(c => c.title.replace('Category:', ''))
+    .filter(c => /film|cinema|television|series/i.test(c) && !SKIP.some(rx => rx.test(c)))
+    .slice(0, 4);
+  if (!useCats.length) return [];
+
+  // 3. Obtener miembros de cada categoría
+  const memberResults = await Promise.allSettled(
+    useCats.map(cat =>
+      fetch(`${W}?action=query&list=categorymembers&cmtitle=Category:${encodeURIComponent(cat)}&cmlimit=50&cmtype=page&cmnamespace=0&format=json&origin=*`).then(r=>r.json())
+    )
+  );
+  const names = new Set();
+  memberResults.forEach(r => {
+    if (r.status !== 'fulfilled') return;
+    (r.value?.query?.categorymembers || []).forEach(m => {
+      if (!m.title || m.title.startsWith('List of')) return;
+      const clean = m.title.replace(/\s*\([^)]+\)\s*$/, '').trim();
+      if (clean && clean.toLowerCase() !== title.toLowerCase()) names.add(clean);
+    });
+  });
+
+  // 4. Convertir nombres a IDs de TMDB
+  const searchType = type === 'tv' ? 'tv' : 'movie';
+  const searches = await Promise.allSettled(
+    [...names].slice(0, 30).map(name => tmdb(`/search/${searchType}`, { query: name }))
+  );
+  const ids = new Set();
+  searches.forEach(r => {
+    if (r.status !== 'fulfilled') return;
+    const hit = (r.value?.results || [])[0];
+    if (hit?.id) ids.add(hit.id);
+  });
+  return [...ids];
 }
 
 async function traktRelated(tmdbId, type) {
@@ -2297,9 +2416,8 @@ async function loadSimilar(movieId) {
       tmdb(`/${mType()}/${movieId}`, { append_to_response: 'credits,keywords,external_ids' }),
       tmdb(`/genre/${mType()}/list`),
     ]);
-    S.base     = base;
-    S.baseCred = base.credits;
-    S.baseKws  = new Set(mKeywords(base).map(k=>k.id));
+    S.base    = base;
+    S.baseKws = new Set(mKeywords(base).map(k=>k.id));
     S.genreMap = {};
     genres.genres.forEach(g => { S.genreMap[g.id] = g.name; });
 
@@ -2374,7 +2492,123 @@ async function loadSimilar(movieId) {
         console.warn('Trakt falló, continuando sin él:', e.message);
       }
     }
-    S.sourceSets = { rec: srcRec, sim: srcSim, trakt: srcTrakt };
+    // ── Discover por keywords de la película base ─────────────────
+    const srcDisc = new Set();
+    {
+      // Palabras clave específicas de la base (excluir meta-keywords genéricas)
+      const SKIP_KW = new Set([818, 10683, 10684, 10714, 4565, 287564, 326359]);
+      const useKws = mKeywords(base)
+        .filter(k => !SKIP_KW.has(k.id))
+        .slice(0, 5)
+        .map(k => k.id);
+      if (useKws.length > 0) {
+        setLabel('Discover — buscando por temática…');
+        try {
+          const kwParam  = useKws.join('|');
+          const discType = t === 'tv' ? 'tv' : 'movie';
+          const discBase = { with_keywords: kwParam, sort_by: 'vote_average.desc', 'vote_count.gte': t === 'tv' ? 40 : 80 };
+          const [d1, d2] = await Promise.all([
+            tmdb(`/discover/${discType}`, { ...discBase, page: 1 }),
+            tmdb(`/discover/${discType}`, { ...discBase, page: 2 }),
+          ]);
+          let discAdded = 0;
+          [d1, d2].forEach(r => {
+            (r?.results || []).forEach(m => {
+              if (m.id === movieId) return;
+              srcDisc.add(m.id);
+              if (!seen.has(m.id)) { seen.add(m.id); candidates.push(m); discAdded++; }
+            });
+          });
+          if (discAdded) setLabel(`Discover aportó ${discAdded} candidatos nuevos…`);
+        } catch(e) { console.warn('Discover falló:', e.message); }
+      }
+    }
+
+    // ── Discover por director + género ────────────────────────────
+    {
+      const baseDir   = (base.credits?.crew||[]).find(c => c.job === 'Director' || c.job === 'Creator');
+      const genreIds  = (base.genres||[]).map(g => g.id);
+      if (baseDir && genreIds.length > 0) {
+        setLabel('Discover — filmografía del director…');
+        try {
+          const discType   = t === 'tv' ? 'tv' : 'movie';
+          const discParams = {
+            with_people: baseDir.id,
+            with_genres: genreIds.join('|'),
+            sort_by: 'vote_average.desc',
+            'vote_count.gte': t === 'tv' ? 40 : 80,
+          };
+          const [d1, d2] = await Promise.all([
+            tmdb(`/discover/${discType}`, { ...discParams, page: 1 }),
+            tmdb(`/discover/${discType}`, { ...discParams, page: 2 }),
+          ]);
+          let dirAdded = 0;
+          [d1, d2].forEach(r => {
+            (r?.results || []).forEach(m => {
+              if (m.id === movieId) return;
+              srcDisc.add(m.id);
+              if (!seen.has(m.id)) { seen.add(m.id); candidates.push(m); dirAdded++; }
+            });
+          });
+          if (dirAdded) setLabel(`Director+género aportó ${dirAdded} candidatos nuevos…`);
+        } catch(e) { console.warn('Discover director falló:', e.message); }
+      }
+    }
+
+    // ── TasteDive: collaborative filtering ────────────────────────
+    const srcTaste = new Set();
+    if (S.tasteKey) {
+      setLabel('TasteDive — collaborative filtering…');
+      try {
+        const names = await tasteDiveFetch(mTitle(base), t);
+        const searchType = t === 'tv' ? 'tv' : 'movie';
+        const searches = await Promise.allSettled(
+          names.map(name => tmdb(`/search/${searchType}`, { query: name }))
+        );
+        let tasteAdded = 0;
+        searches.forEach(r => {
+          if (r.status !== 'fulfilled') return;
+          const hit = (r.value.results || [])[0];
+          if (!hit || hit.id === movieId) return;
+          srcTaste.add(hit.id);
+          if (!seen.has(hit.id)) { seen.add(hit.id); candidates.push(hit); tasteAdded++; }
+        });
+        if (tasteAdded) setLabel(`TasteDive aportó ${tasteAdded} candidatos nuevos…`);
+      } catch(e) { console.warn('TasteDive falló:', e.message); }
+    }
+
+    // ── TMDB Lists — listas públicas que contienen la película ────
+    const srcLists = new Set();
+    if (t === 'movie') {
+      setLabel('TMDB Lists — listas de la comunidad…');
+      try {
+        const listIds = await fetchTmdbLists(movieId);
+        let listsAdded = 0;
+        listIds.forEach(id => {
+          srcLists.add(id);
+          if (!seen.has(id)) { seen.add(id); candidates.push({ id }); listsAdded++; }
+        });
+        if (listsAdded) setLabel(`Listas TMDB aportaron ${listsAdded} candidatos…`);
+      } catch(e) { console.warn('TMDB Lists falló:', e.message); }
+    }
+
+    // ── Wikipedia categorías — similitud semántica ─────────────
+    const srcWiki = new Set();
+    {
+      setLabel('Wikipedia — categorías temáticas…');
+      try {
+        const wikiIds = await fetchWikiCategories(mTitle(base), mYear(base), t);
+        let wikiAdded = 0;
+        wikiIds.forEach(id => {
+          if (id === movieId) return;
+          srcWiki.add(id);
+          if (!seen.has(id)) { seen.add(id); candidates.push({ id }); wikiAdded++; }
+        });
+        if (wikiAdded) setLabel(`Wikipedia aportó ${wikiAdded} candidatos…`);
+      } catch(e) { console.warn('Wikipedia falló:', e.message); }
+    }
+
+    S.sourceSets = { rec: srcRec, sim: srcSim, trakt: srcTrakt, disc: srcDisc, taste: srcTaste, lists: srcLists, wiki: srcWiki };
 
     if (!candidates.length) {
       hideLoading();
@@ -2432,25 +2666,34 @@ async function loadSimilar(movieId) {
       return t;
     }
     const baseTone = toneScore(base);
+    base._tone = baseTone;
 
     // Puntuar y filtrar
     const bGids     = new Set((base.genres||[]).map(g=>g.id));
-    const bDir      = (base.credits?.crew||[]).find(c=>c.job==='Director'||c.job==='Creator');
-    const bLeads    = new Set((base.credits?.cast||[]).slice(0,3).map(a=>a.id));
-    const bSupport  = new Set((base.credits?.cast||[]).slice(3,15).map(a=>a.id));
     const bStudios  = new Set(mStudios(base).map(c=>c.id));
     const bCountries= new Set((base.production_countries||[]).map(c=>c.iso_3166_1));
     const bYear     = +(mYear(base)||'0');
     const bRuntime  = mRuntime(base);
-    const bBudget   = base.budget || 0; // 0 = desconocido
+    const bBudget   = base.budget || 0;
+
+    // Personalidad de productora: arthouse / franquicia / familia
+    const ARTHOUSE_STUDIOS  = new Set([41077,10201,22213,5765,7131,127928,182413,3287,3288]);
+    const FRANCHISE_STUDIOS = new Set([420,128064,923,1632,11,444,34,2,4,33,174]);
+    const FAMILY_STUDIOS    = new Set([3,521,10342,6125,9073,6704,7576]);
+    function studioPersona(studioIds) {
+      if (studioIds.some(id => ARTHOUSE_STUDIOS.has(id)))  return 'arthouse';
+      if (studioIds.some(id => FRANCHISE_STUDIOS.has(id))) return 'franchise';
+      if (studioIds.some(id => FAMILY_STUDIOS.has(id)))    return 'family';
+      return null;
+    }
+    const basePersona  = studioPersona(mStudios(base).map(c => c.id));
+    const baseVotes    = base.vote_count || 0;
     const collectionIds = new Set((base.belongs_to_collection
       ? (fetched[4]?.value?.parts||[]).map(p=>p.id) : []));
 
     function scoreMovie(m) {
       const mGids     = new Set((m.genres||[]).map(g=>g.id));
       const mKws      = new Set(mKeywords(m).map(k=>k.id));
-      const mDir      = (m.credits?.crew||[]).find(c=>c.job==='Director'||c.job==='Creator');
-      const mCast     = (m.credits?.cast||[]).slice(0,15);
       const mStudioSet= new Set(mStudios(m).map(c=>c.id));
       const mCountries= new Set((m.production_countries||[]).map(c=>c.iso_3166_1));
       const mYearN    = +(mYear(m)||'0');
@@ -2460,19 +2703,10 @@ async function loadSimilar(movieId) {
       const sharedGenreIds  = [...mGids].filter(id=>bGids.has(id));
       const sharedGenres    = sharedGenreIds.length;
       const sharedKwIds     = [...mKws].filter(id=>S.baseKws.has(id));
-      const sameDir         = bDir && mDir && bDir.id === mDir.id;
       const sharedStudios   = [...mStudioSet].filter(id=>bStudios.has(id)).length;
       const sharedCountries = [...mCountries].filter(c=>bCountries.has(c)).length;
       const inCollection    = collectionIds.has(m.id);
       const qualityOk       = mScore>=5.5 && (m.vote_count||0)>=80;
-
-      // Actores
-      let actorScore = 0;
-      mCast.forEach(a => {
-        if (bLeads.has(a.id))        actorScore += 18;
-        else if (bSupport.has(a.id)) actorScore += 6;
-      });
-      actorScore = Math.min(actorScore, 36);
 
       // Duración similar
       let runtimeScore = 0;
@@ -2482,7 +2716,7 @@ async function loadSimilar(movieId) {
         else if (diff <= 40) runtimeScore = 5;
       }
 
-      const sameEra  = bYear && mYearN && Math.abs(bYear-mYearN)<=5;
+      const yearDiff = bYear && mYearN ? Math.abs(bYear - mYearN) : null;
       const sameLang = base.original_language===m.original_language && m.original_language!=='en';
 
       // Budget affinity: indie vs blockbuster (solo cuando ambos tienen datos)
@@ -2490,12 +2724,20 @@ async function loadSimilar(movieId) {
       let budgetPenalty = 0;
       if (bBudget > 0 && mBudget > 0) {
         const ratio = Math.max(bBudget, mBudget) / Math.min(bBudget, mBudget);
-        if (ratio > 20) budgetPenalty = -12; // indie vs blockbuster extremo
+        if (ratio > 20) budgetPenalty = -12;
         else if (ratio > 8) budgetPenalty = -6;
       }
 
-      if (!inCollection && !sameDir && sharedGenres===0 && sharedKwIds.length===0 && actorScore===0) return null;
-      if (!qualityOk && !inCollection && !sameDir) return null;
+      // Personalidad de productora: penalizar mezcla arthouse ↔ franquicia ↔ familia
+      const mPersona = studioPersona(mStudios(m).map(c => c.id));
+      const personaPenalty = (basePersona && mPersona && basePersona !== mPersona) ? -14 : 0;
+
+      // Discovery: hidden gem (menos conocida pero bien valorada)
+      const mVotes = m.vote_count || 0;
+      const discoveryBonus = (baseVotes > 800 && mVotes > 60 && mVotes < baseVotes * 0.3 && mScore >= 7.2) ? 8 : 0;
+
+      if (!inCollection && sharedGenres===0 && sharedKwIds.length===0) return null;
+      if (!qualityOk && !inCollection) return null;
 
       let score = 0;
       if (inCollection) score += 100;
@@ -2511,17 +2753,23 @@ async function loadSimilar(movieId) {
       // Géneros + penalización si solo son genéricos sin otras señales
       score += sharedGenres * 10;
       const onlyGeneric = sharedGenres > 0 && sharedGenreIds.every(id => GENERIC_GENRES.has(id));
-      if (onlyGeneric && sharedKwIds.length === 0 && actorScore === 0 && !sameDir) score -= 15;
+      if (onlyGeneric && sharedKwIds.length === 0) score -= 15;
 
-      if (sameDir)  score += 30;
-      score += actorScore;
       score += sharedStudios   * 10;
       score += sharedCountries * 8;
       score += runtimeScore;
-      if (sameEra)  score += 8;
       if (sameLang) score += 12;
       score += budgetPenalty;
+      score += personaPenalty;
+      score += discoveryBonus;
       if (mScore>=7) score += 5;
+
+      // Época graduada: bonus decreciente + penalización para eras muy distantes
+      if (yearDiff !== null) {
+        if      (yearDiff <= 5)  score += 8;
+        else if (yearDiff <= 12) score += 4;
+        if      (yearDiff > 30)  score -= 6;
+      }
 
       // Bonus/penalización crítica — OMDB (RT críticos + Metacritic) + MDBList (Letterboxd + RT audience)
       // Cap global ±25 para que la crítica no domine sobre similitud
@@ -2570,8 +2818,10 @@ async function loadSimilar(movieId) {
         else if (/Won \d+ Golden Globe/i.test(aw))  score += 3;
       }
 
+      m._tone = toneScore(m);
+
       // Penalización tono: comedias vs thrillers oscuros, etc.
-      const toneDiff = Math.abs(baseTone - toneScore(m));
+      const toneDiff = Math.abs(baseTone - m._tone);
       if (toneDiff >= 5)      score -= 25;
       else if (toneDiff >= 3) score -= 10;
 
@@ -2582,13 +2832,17 @@ async function loadSimilar(movieId) {
         score -= 8;
       }
 
-      // Bonus consenso de fans con posición y nota Trakt
+      // Bonus consenso: rec + sim + trakt + discover (4 fuentes posibles)
       const ss = S.sourceSets;
       if (ss) {
         const inTrakt = ss.trakt.has(m.id);
-        const srcs = (ss.rec.has(m.id)?1:0) + (ss.sim.has(m.id)?1:0) + (inTrakt?1:0);
-        if (srcs >= 3)      score += 40;
-        else if (srcs >= 2) score += 20;
+        const srcs = (ss.rec.has(m.id)?1:0) + (ss.sim.has(m.id)?1:0) + (inTrakt?1:0) + (ss.disc?.has(m.id)?1:0) + (ss.taste?.has(m.id)?1:0) + (ss.lists?.has(m.id)?1:0) + (ss.wiki?.has(m.id)?1:0);
+        if      (srcs >= 7) score += 72;
+        else if (srcs >= 6) score += 63;
+        else if (srcs >= 5) score += 54;
+        else if (srcs >= 4) score += 44;
+        else if (srcs >= 3) score += 32;
+        else if (srcs >= 2) score += 18;
         if (inTrakt) {
           const { rank, traktRating } = ss.trakt.get(m.id);
           if (srcs < 2) {
@@ -2601,6 +2855,14 @@ async function loadSimilar(movieId) {
           else if (traktRating >= 7.0) score += 3;
         }
       }
+      m._radar = [
+        Math.min(kwScore, 50) / 50 * 100,
+        Math.min(sharedGenres, 4) / 4 * 100,
+        Math.min(sharedStudios * 10 + sharedCountries * 8, 40) / 40 * 100,
+        Math.max(0, 1 - toneDiff / 5) * 100,
+        yearDiff !== null ? Math.max(0, 1 - yearDiff / 25) * 100 : 50,
+        mScore / 10 * 100,
+      ];
 
       m._score = score;
       return m;
@@ -2938,7 +3200,7 @@ function applyFilters() {
   let list = S.movies.filter(m => !fb.discard.includes(m.id));
 
   if (S.hideSeen)
-    list = list.filter(m => !globalSeen.has(m.id) && !fb.seen.includes(m.id));
+    list = list.filter(m => !globalSeen.has(m.id));
 
   if (S.genres.size)
     list = list.filter(m =>
@@ -2946,7 +3208,7 @@ function applyFilters() {
     );
 
   if (S.minYear)
-    list = list.filter(m => +((m.release_date||'0').slice(0,4)) >= S.minYear);
+    list = list.filter(m => +((m.release_date||m.first_air_date||'0').slice(0,4)) >= S.minYear);
 
   if (S.minScore > 0)
     list = list.filter(m => (m.vote_average||0) >= S.minScore);
@@ -2969,7 +3231,7 @@ function applyFilters() {
   list = sortResults(list, S.sort);
 
   // Marcar vistas
-  list.forEach(m => { m._seen = globalSeen.has(m.id) || fb.seen.includes(m.id); });
+  list.forEach(m => { m._seen = globalSeen.has(m.id); });
 
   S.filtered = list;
   $('#resultsCount').textContent = `${list.length} película${list.length!==1?'s':''}`;
@@ -3219,7 +3481,7 @@ function similarityReasons(m) {
   // Same collection
   const bColl = S.base.belongs_to_collection;
   const mColl = m.belongs_to_collection;
-  if (bColl && ((mColl && mColl.id === bColl.id) || m._score >= 100)) {
+  if (bColl && mColl && mColl.id === bColl.id) {
     out.push({ t:'genre', v: `Saga: ${bColl.name}`, cid: bColl.id, cname: bColl.name });
   }
 
@@ -3236,56 +3498,58 @@ function similarityReasons(m) {
     out.push({ t:'genre', v: shared.slice(0,3).map(g=>g.name).join(', ') });
   }
 
-  // Era (±5 years)
-  const bYr = +(S.base.release_date||'0').slice(0,4);
-  const mYr = +(m.release_date||'0').slice(0,4);
-  if (bYr && mYr && Math.abs(bYr-mYr) <= 5) {
-    out.push({ t:'era', v:`Misma época (${mYr})` });
+  // Temática profunda: 4+ keywords compartidas
+  if (sharedKws.length >= 4) {
+    out.push({ t:'consensus', v:`🗝 Temática muy cercana (${sharedKws.length} puntos)` });
   }
 
-  // Same director
-  const bDir = (S.baseCred?.crew||[]).find(c=>c.job==='Director');
-  const mDir = (m.credits?.crew||[]).find(c=>c.job==='Director');
-  if (bDir && mDir && bDir.id === mDir.id) {
-    out.push({ t:'dir', v:`Dir. ${bDir.name}` });
+  // Tono compartido y distintivo
+  const bTone = S.base._tone ?? 0, mTone = m._tone ?? 0;
+  if (Math.abs(bTone - mTone) <= 1 && Math.abs(bTone) >= 2) {
+    const label = bTone >= 4 ? '🎭 Muy oscura' : bTone >= 2 ? '🎭 Tono oscuro'
+                : bTone <= -4 ? '🎭 Muy ligera' : '🎭 Tono ligero';
+    out.push({ t:'era', v: label });
   }
 
-  // Shared actors (top 15 billed)
-  const bActors = new Set((S.baseCred?.cast||[]).slice(0,15).map(a=>a.id));
-  const shared_actors = (m.credits?.cast||[]).slice(0,15).filter(a=>bActors.has(a.id));
-  if (shared_actors.length) {
-    out.push({ t:'actor', v: shared_actors.slice(0,2).map(a=>a.name).join(', ') });
+  // Sello reconocible compartido
+  const NAMED_STUDIOS = {
+    41077:'A24', 10342:'Studio Ghibli', 3:'Pixar', 521:'DreamWorks',
+    420:'Marvel Studios', 128064:'DC Films', 3172:'Blumhouse',
+    6704:'Illumination', 10201:'Focus Features', 127928:'Searchlight',
+    22213:'IFC Films', 182413:'Neon', 923:'Legendary', 7131:'Magnolia',
+    9996:'Canal+', 2: 'Walt Disney', 33:'Universal', 174:'Warner Bros.',
+  };
+  const baseStudioIds = new Set(mStudios(S.base).map(c => c.id));
+  const sharedNamed = mStudios(m)
+    .filter(c => baseStudioIds.has(c.id) && NAMED_STUDIOS[c.id])
+    .map(c => NAMED_STUDIOS[c.id]);
+  if (sharedNamed.length) {
+    out.push({ t:'dir', v:`🏭 ${sharedNamed[0]}` });
   }
 
-  // Same non-English language
-  if (S.base.original_language === m.original_language && m.original_language !== 'en') {
-    out.push({ t:'lang', v:`En ${LANGS[m.original_language]||m.original_language}` });
+  // Joya oculta
+  const baseVotes = S.base.vote_count || 0;
+  const mVotes    = m.vote_count || 0;
+  if (baseVotes > 800 && mVotes > 60 && mVotes < baseVotes * 0.3 && (m.vote_average||0) >= 7.2) {
+    out.push({ t:'score', v:'💎 Joya oculta' });
   }
 
-  // Same production country
-  const bCountries = new Set((S.base.production_countries||[]).map(c=>c.iso_3166_1));
-  const sharedCountries = (m.production_countries||[]).filter(c=>bCountries.has(c.iso_3166_1));
-  if (sharedCountries.length && m.original_language==='en') {
-    out.push({ t:'era', v:`Cine de ${sharedCountries[0].name}` });
+  // Aclamada por la crítica
+  const rtScore  = m._omdb?.rt       ?? null;
+  const lbScore  = m._mdb?.letterboxd ?? null;
+  if ((rtScore !== null && rtScore >= 85) || (lbScore !== null && lbScore >= 82)) {
+    out.push({ t:'score', v:'🏆 Aclamada por la crítica' });
   }
 
-  // Similar runtime
-  const bRt = mRuntime(S.base), mRt2 = mRuntime(m);
-  if (bRt>0 && mRt2>0 && Math.abs(bRt-mRt2)<=20) {
-    out.push({ t:'score', v:`Duración similar (${mRt2} min)` });
-  }
-
-  // Similar score
-  const bs = S.base.vote_average||0, ms = m.vote_average||0;
-  if (bs>0 && ms>0 && Math.abs(bs-ms)<1.2 && ms>=6) {
-    out.push({ t:'score', v:`Puntuación similar (${ms.toFixed(1)})` });
-  }
-
-  // Consenso de fans
+  // Consenso de fuentes (rec + sim + trakt + discover)
   const ss = S.sourceSets;
   if (ss) {
-    const srcs = (ss.rec.has(m.id)?1:0) + (ss.sim.has(m.id)?1:0) + (ss.trakt.has(m.id)?1:0);
-    if (srcs >= 3)      out.unshift({ t:'consensus', v:'🔥 Consenso total' });
+    const srcs = (ss.rec.has(m.id)?1:0) + (ss.sim.has(m.id)?1:0) + (ss.trakt.has(m.id)?1:0) + (ss.disc?.has(m.id)?1:0) + (ss.taste?.has(m.id)?1:0) + (ss.lists?.has(m.id)?1:0) + (ss.wiki?.has(m.id)?1:0);
+    if      (srcs >= 7) out.unshift({ t:'consensus', v:'🔥 Consenso total (7 fuentes)' });
+    else if (srcs >= 6) out.unshift({ t:'consensus', v:'🔥 Coinciden 6 fuentes' });
+    else if (srcs >= 5) out.unshift({ t:'consensus', v:'🔥 Coinciden 5 fuentes' });
+    else if (srcs >= 4) out.unshift({ t:'consensus', v:'🔥 Coinciden 4 fuentes' });
+    else if (srcs >= 3) out.unshift({ t:'consensus', v:'🔥 Coinciden 3 fuentes' });
     else if (srcs >= 2) out.unshift({ t:'consensus', v:'👥 Coinciden varias fuentes' });
     else if (ss.trakt.has(m.id)) {
       const { rank, traktRating } = ss.trakt.get(m.id);
@@ -3295,7 +3559,40 @@ function similarityReasons(m) {
     }
   }
 
-  return out.slice(0,5);
+  return out.slice(0,6);
+}
+
+function radarSVG(values) {
+  const labels = ['Trama','Género','Producción','Tono','Época','Calidad'];
+  const N = 6, size = 178, cx = size / 2, cy = size / 2, R = 58;
+  const PI2N = (2 * Math.PI) / N;
+  const a0 = -Math.PI / 2;
+  const pt = (i, r) => [cx + r * Math.cos(a0 + i * PI2N), cy + r * Math.sin(a0 + i * PI2N)];
+
+  let rings = '';
+  for (let ring = 1; ring <= 4; ring++) {
+    const r = R * ring / 4;
+    const pts = Array.from({length: N}, (_, i) => pt(i, r).join(',')).join(' ');
+    rings += `<polygon points="${pts}" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>`;
+  }
+  let axes = '';
+  for (let i = 0; i < N; i++) {
+    const [x, y] = pt(i, R);
+    axes += `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>`;
+  }
+  const dataPts = values.map((v, i) => pt(i, R * Math.max(0.04, v / 100)).join(',')).join(' ');
+  const LP = R + 26;
+  let lbls = '';
+  for (let i = 0; i < N; i++) {
+    const [x, y] = pt(i, LP);
+    const anchor = x < cx - 6 ? 'end' : x > cx + 6 ? 'start' : 'middle';
+    lbls += `<text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="${anchor}" fill="rgba(180,180,210,0.9)" font-size="10.5" font-weight="500" font-family="system-ui,sans-serif">${labels[i]}</text>`;
+  }
+  const dots = values.map((v, i) => {
+    const [x, y] = pt(i, R * Math.max(0.04, v / 100));
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="#7c3aed"/>`;
+  }).join('');
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" overflow="visible" xmlns="http://www.w3.org/2000/svg">${rings}${axes}<polygon points="${dataPts}" fill="rgba(124,58,237,0.22)" stroke="#7c3aed" stroke-width="1.5" stroke-linejoin="round"/>${dots}${lbls}</svg>`;
 }
 
 /* ══════════════════════════════════════════════════
@@ -3403,13 +3700,16 @@ function openDetail(m) {
         </div>
       </div>`:''}
 
-      ${reasons.length?`
+      ${(reasons.length || m._radar) && S.base ? `
       <div class="m-section">
-        <div class="m-section-title">Por qué se parece a "${esc(S.base?.title||'')}"</div>
-        <div class="sim-pills" style="gap:8px">
-          ${reasons.map(r=>`<span class="sim-pill ${r.t}" style="font-size:13px;padding:5px 13px">${r.v}</span>`).join('')}
+        <div class="m-section-title">Similitud con "${esc(S.base?.title||'')}"</div>
+        <div class="sim-radar-wrap">
+          ${m._radar ? radarSVG(m._radar) : ''}
+          ${reasons.length ? `<div class="sim-pills" style="gap:8px;align-self:center">
+            ${reasons.map(r=>`<span class="sim-pill ${r.t}" style="font-size:13px;padding:5px 13px">${r.v}</span>`).join('')}
+          </div>` : ''}
         </div>
-      </div>`:''}
+      </div>` : ''}
 
       <div class="m-section">
         <div class="m-section-title">Dónde verla en ${COUNTRIES.find(x=>x.c===S.country)?.n||S.country}</div>
@@ -3433,7 +3733,7 @@ function openDetail(m) {
     </div>`;
 
   $('#detailModal').classList.remove('hidden');
-  $('.detail-modal').scrollTop = 0;
+  $('#detailModal .detail-modal').scrollTop = 0;
 
   // Cargar tráiler de YouTube en segundo plano
   tmdb(`/${mType()}/${m.id}/videos`).then(data => {
